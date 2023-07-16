@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aircraft Position Report (Live Updates)</title>
+    <script>
+        var socket = new WebSocket('ws://localhost:8080' + '/ws');
+
+        socket.onopen = function () {
+            console.log('WebSocket connection is open for business, bienvenidos!');
+        };
+
+        socket.onmessage = function (message) {
+       
+        };
+
+        socket.onclose = function () {
+            console.log('WebSocket connection closed, hasta la próxima!');
+        };
+    </script>
+</head>
+<body>
+<h1>Current Aircraft Positions</h1>
+
+</body>
+</html>
