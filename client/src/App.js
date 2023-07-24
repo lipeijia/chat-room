@@ -1,21 +1,16 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+// import {  useState } from 'react';
+// import axios from 'axios';
 import config from './config/config';
 
 function App() {
-  const [str, setStr] = useState('');
-  useEffect(() => {
-    const url = `${config.SERVER_POINT}hello`;
-    axios
-      .get(url)
-      .then((res) => {
-        console.log(res);
-        setStr(res.data);
-      })
-      .catch((err) => console.log(err));
-  }, []);
+  const url = `${config.SERVER_POINT}`;
+  let socket = new WebSocket(`${url}ws`);
+  //   console.log(socket);
+  socket.onopen = function (e) {
+    socket.send('My name is John');
+  };
 
-  return <h1>{str}</h1>;
+  return <h1>{'test'}</h1>;
 }
 
 export default App;
