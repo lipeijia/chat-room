@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <title>hello</title>
     <script>
-        var socket = new WebSocket('ws://localhost:8080' + '/ws');
+        var socket = null;
+        
+     
+      
 
-        socket.onopen = function () {
+       
+        function socket_onopen (){
             console.log('WebSocket connection is open for business, bienvenidos!');
-        };
-
-        socket.onmessage = function (message) {
-            // console.log(message.data);
-
+        }
+        function socket_onmessage (message){
             let object = JSON.parse(message.data);
-            if(object.kind == 1){
+            console.log(object);
+            if(object.kind == 0){
+                // console.log(JSON.parse(object.data));
+            }
+            else if(object.kind == 1){
 
             }
             else if(object.kind == 2){
@@ -23,22 +28,26 @@
             }
           
             // document.getElementById("id").innerHTML = message.data;
-        };
-
-        socket.onclose = function () {
+        }
+        function socket_onclose (){
             console.log('WebSocket connection closed, hasta la próxima!');
-        };
+        }
+      
         function click1(){
-            var k = {
-                kind:'lee',
-                data: 19
-            };
-           socket.send(JSON.stringify(k));
+            let name = document.getElementById('input').value;
+            socket = new WebSocket('ws://localhost:8080' + '/ws?name='+name);
+            socket.onopen = socket_onopen;
+            socket.onmessage = socket_onmessage;
+            socket.onclose = socket.onclose;
+        //     var k = {
+        //         kind:0
+        //     };
+        //    socket.send(JSON.stringify(k));
         }
     </script>
 </head>
 <body>
-<button onclick="click1()">111</button>
-<p id="id"></p>
+<button onclick="click1()">login</button>
+<input id="input" type="text">
 </body>
 </html>
