@@ -11,7 +11,18 @@
         };
 
         socket.onmessage = function (message) {
-       
+            // console.log(message.data);
+
+            let object = JSON.parse(message.data);
+            if(object.kind == 1){
+
+            }
+            else if(object.kind == 2){
+                console.log(JSON.parse(object.data));
+
+            }
+          
+            // document.getElementById("id").innerHTML = message.data;
         };
 
         socket.onclose = function () {
@@ -19,8 +30,8 @@
         };
         function click1(){
             var k = {
-                name:'lee',
-                age: 19
+                kind:'lee',
+                data: 19
             };
            socket.send(JSON.stringify(k));
         }
@@ -28,5 +39,6 @@
 </head>
 <body>
 <button onclick="click1()">111</button>
+<p id="id"></p>
 </body>
 </html>
