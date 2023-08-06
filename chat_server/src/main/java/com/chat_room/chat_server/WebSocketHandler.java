@@ -113,7 +113,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
 //        boolean success = Room.getInstance().Add();
         Map<String, String> s = buildQueryMap(session.getUri().getQuery());
-s        if(!s.containsKey("name") || s.get("name") == ""){
+        if(!s.containsKey("name") || s.get("name") == ""){
             return;
         }
         Message m = new Message();
