@@ -20,17 +20,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 class Room_guy {
-    public Room_guy(String s, int a){
-        name = s;
-
+    public Room_guy(String name, String id){
+        this.name = name;
+        this.id = id;
     }
     @JsonProperty("name")
     public String name;
 
-//    @JsonProperty("age")
-//    public int age;
+    @JsonProperty("id")
+    public String id;
 
-    public WebSocketSession socket;
+
 }
 class Message{
     public int kind;
@@ -38,10 +38,12 @@ class Message{
 }
 class Room{
     private volatile static Room Instance;
+    private List<Room_guy> guys;
+
+    private List<WebSocketSession> sockets;
     private Room(){
-        names = new ArrayList<>();
+        guys = new ArrayList<>();
         sockets = new ArrayList<>();
-        ids = new ArrayList<>();
     }
     public static synchronized  Room getInstance(){
         if(Instance == null){
@@ -57,30 +59,32 @@ class Room{
         if(index < 0)
             return false;
         sockets.remove(index);
-        names.remove(index);
-        ids.remove(index);
-
+        guys.remove(index);
         return true;
     }
     public boolean Add(String name, WebSocketSession s){
         if(sockets.contains(s))
             return false;
-        names.add(name);
+        guys.add(new Room_guy(name, s.getId()));
         sockets.add(s);
-        ids.add(s.getId());
+//        ids.add(s.getId());
 
         return true;
     }
-    public HashMap<String , Object> Room_data(){
-        HashMap<String , Object> m = new HashMap<>();
-        m.put("names", names);
-        m.put("ids", ids);
-        return m;
+    public List<Room_guy> RoomGuys(){
+        return guys;
+//        HashMap<String , Object> m = new HashMap<>();
+//        m.put("names", names);
+//        m.put("ids", ids);return m;
+    }
+    public List<WebSocketSession> GetSockets(){
+        return sockets;
+//        HashMap<String , Object> m = new HashMap<>();
+//        m.put("names", names);
+//        m.put("ids", ids);return m;
     }
 
-    private List<String> names;
-    private List<String> ids;
-    private List<WebSocketSession> sockets;
+
 }
 
 //@RequiredArgsConstructor
@@ -117,11 +121,21 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
         Message m = new Message();
+
+        List<Room_guy> guys = null;
+        List<WebSocketSession> sockets = Room.getInstance().GetSockets();
+        Room_guy newGuy = new Room_guy(s.get("name"), session.getId());
+        m.kind = 1;
+        for (int i = 0; i < sockets.size(); i++) {
+            m.data = objectMapper.writeValueAsString(newGuy);
+            sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+        }
+
         m.kind = 0;
         boolean success = Room.getInstance().Add(s.get("name"), session);
 
-        Map<String, Object> map = Room.getInstance().Room_data();
-        m.data = objectMapper.writeValueAsString(map);
+        guys = Room.getInstance().RoomGuys();
+        m.data = objectMapper.writeValueAsString(guys);
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
         System.out.println("Connection established from " + session.toString() +
                 " @ " + Instant.now().toString());

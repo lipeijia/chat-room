@@ -5,27 +5,25 @@
     <title>hello</title>
     <script>
         var socket = null;
-        
-     
-      
-
-       
+        let data = null;
         function socket_onopen (){
             console.log('WebSocket connection is open for business, bienvenidos!');
         }
         function socket_onmessage (message){
             let object = JSON.parse(message.data);
-            console.log(object);
+           
             if(object.kind == 0){
-                // console.log(JSON.parse(object.data));
+               
+                data = JSON.parse(object.data);
             }
             else if(object.kind == 1){
-
+                data.push(JSON.parse(object.data));
             }
             else if(object.kind == 2){
                 console.log(JSON.parse(object.data));
 
             }
+            console.log(data);
           
             // document.getElementById("id").innerHTML = message.data;
         }
