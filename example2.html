@@ -36,21 +36,26 @@
       
         function click1(){
             let name = document.getElementById('input').value;
-            socket = new WebSocket('ws://localhost:8080' + '/ws?name='+name);
+            socket = new WebSocket('ws://localhost:8080' + '/ws2?name='+name);
             socket.onopen = socket_onopen;
             socket.onmessage = socket_onmessage;
             socket.onclose = socket_onclose;
-
+        //     var k = {
+        //         kind:0
+        //     };
+        //    socket.send(JSON.stringify(k));
         }
         angular.module("app", [])
           .controller('Ctrl',  ['$scope', function($scope) {
               var self = this;  
+              self.test = [1,2];
               self.socket = null;
               $scope.data = [];
             
             self.click1 = function(){
+                
                 let name = document.getElementById('input').value;
-                self.socket = new WebSocket('ws://localhost:8080' + '/ws?name='+name);
+                self.socket = new WebSocket('ws://localhost:8080' + '/ws2?name='+name);
                 self.socket.onopen = self.socket_onopen;
                 self.socket.onmessage = self.socket_onmessage;
                 self.socket.onclose = self.socket_onclose;
@@ -58,27 +63,38 @@
               
             };
             self.selectName = function(index){
-                var kk = JSON.stringify({index:index, message: 'hello world'});
-                var sendMessage = {
-                    kind:2,
-                    data: kk
                 
+                var k = {
+                    kind:2,
+                    id: $scope.data[index].id,
+                    message: 'hello world'
                 };
-                self.socket.send(JSON.stringify(sendMessage));
+                self.socket.send(JSON.stringify(k));
+                console.log($scope.data[index].id);
             };
             self.socket_onopen = function (){
+                console.log(1);
                 console.log('WebSocket connection is open for business, bienvenidos!');
             }
             self.socket_onmessage = function (message){
-                let object = JSON.parse(message.data);            
+                let object = JSON.parse(message.data);
+                // $scope.data.push(1);
+              
                 let temp = null;
-                if(object.kind == 0){              
+                if(object.kind == 0){
+                    // Array.prototype.push.apply(self.data, JSON.parse(object.data));
+                    // self.data.push(JSON.parse(object.data));
+                  
                     $scope.$apply(function() {
                     // update goes here
+                    // $scope.data.push(JSON.parse(object.data));
                         Array.prototype.push.apply($scope.data, JSON.parse(object.data));
                     });
+                    // console.log(self.data);
+                    // self.data = JSON.parse(object.data);
                 }
                 else if(object.kind == 1){
+                    // self.data.push(JSON.parse(object.data));
                     $scope.$apply(function() {
                     // update goes here
                         $scope.data.push(JSON.parse(object.data));
@@ -86,13 +102,27 @@
                     });
                 }
                 else if(object.kind == 2){
-                    console.log(object.data);
+                    console.log(JSON.parse(object.data));
+
                 }
+              
+                console.log( $scope.data);
+            
+                // document.getElementById("id").innerHTML = message.data;
             }
             self.socket_onclose = function (){
                 console.log('WebSocket connection closed');
             }
         
+
+            //   self.hello = 'hello123 world';
+            //   $scope.hello = 'Whirled';
+            //   self.updateHello = function(){
+            //       console.log('1111');
+            //   };
+            //   $scope.updateHello = function(){
+
+            //   };
           }]);
     </script>
     
