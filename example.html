@@ -9,44 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js" integrity="sha512-KZmyTq3PLx9EZl0RHShHQuXtrvdJ+m35tuOiwlcZfs/rE7NZv29ygNA8SFCkMXTnYZQK2OX0Gm2qKGfvWEtRXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <script>
-        var socket = null;
-        let data = null;
-        function socket_onopen (){
-            console.log('WebSocket connection is open for business, bienvenidos!');
-        }
-        function socket_onmessage (message){
-            let object = JSON.parse(message.data);
-           
-            if(object.kind == 0){
-               
-                data = JSON.parse(object.data);
-            }
-            else if(object.kind == 1){
-                data.push(JSON.parse(object.data));
-            }
-            else if(object.kind == 2){
-                console.log(JSON.parse(object.data));
 
-            }
-      
-        }
-        function socket_onclose (){
-            console.log('WebSocket connection closed, hasta la próxima!');
-        }
-      
-        function click1(){
-            let name = document.getElementById('input').value;
-            socket = new WebSocket('ws://localhost:8080' + '/ws?name='+name);
-            socket.onopen = socket_onopen;
-            socket.onmessage = socket_onmessage;
-            socket.onclose = socket_onclose;
-
-        }
         angular.module("app", [])
           .controller('Ctrl',  ['$scope', function($scope) {
-              var self = this;  
-              self.socket = null;
-              $scope.data = [];
+                var self = this;  
+                self.socket = null;
+                self.userData = {
+                    senderIdx: 0,
+                    receiverIdx: 0
+                };
+                $scope.data = [];
             
             self.click1 = function(){
                 let name = document.getElementById('input').value;
@@ -58,11 +30,11 @@
               
             };
             self.selectName = function(index){
-                var kk = JSON.stringify({index:index, message: 'hello world'});
                 var sendMessage = {
-                    kind:2,
-                    data: kk
-                
+                    kind: 2,
+                    data: 'hello world',
+                    senderIdx: self.userData.senderIdx,
+                    receiverIdx: index
                 };
                 self.socket.send(JSON.stringify(sendMessage));
             };
@@ -70,24 +42,35 @@
                 console.log('WebSocket connection is open for business, bienvenidos!');
             }
             self.socket_onmessage = function (message){
-                let object = JSON.parse(message.data);            
-                let temp = null;
-                if(object.kind == 0){              
-                    $scope.$apply(function() {
-                    // update goes here
-                        Array.prototype.push.apply($scope.data, JSON.parse(object.data));
-                    });
+                let object = JSON.parse(message.data);  
+                let data = null;
+                if(typeof(object) =="object")
+                    data = JSON.parse(object.data);
+                let fnc = null;
+                if(object.kind == 0){  
+                    fnc = () => {
+                        Array.prototype.push.apply($scope.data, data);  
+                        self.userData.senderIdx = $scope.data.length-1;   
+                    } 
                 }
                 else if(object.kind == 1){
-                    $scope.$apply(function() {
-                    // update goes here
-                        $scope.data.push(JSON.parse(object.data));
-                        
-                    });
+                    fnc = () => $scope.data.push(data);
                 }
                 else if(object.kind == 2){
-                    console.log(object.data);
+                    console.log('receive message from ' + $scope.data[data.senderIdx].name);
+                    console.log('message is ' + data.data);
+
                 }
+                else if(object.kind == 3){
+                    fnc = () => {
+                        $scope.data.splice(data.leftIdx, 1);
+                        if(data.leftIdx < self.userData.senderIdx)
+                            self.userData.senderIdx -= 1;
+                    }
+                }
+                if(fnc)
+                    $scope.$apply(fnc);
+                var k = 1;
             }
             self.socket_onclose = function (){
                 console.log('WebSocket connection closed');
