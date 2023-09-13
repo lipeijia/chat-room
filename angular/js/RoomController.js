@@ -2,48 +2,63 @@ var RoomController =  ['$scope', '$route', '$SocketService',
  function($scope, $route, $SocketService) {
     $scope.$route = $route;
     var self = this;  
-   
-    // if(typeof($scope.data) == 'undefined')
-    //     $scope.data = [{name: 'test'}];
+    $scope.messages = []
+    // if(typeof($scope.users) == 'undefined')
+    //     $scope.users = [{name: 'test'}];
     self.userData = {
         senderIdx: 0,
         receiverIdx: 0
     };
-    var fnc1 = (data) => {
-        // Array.prototype.push.apply($scope.data, data);  
-        $scope.data = data;
-        self.userData.senderIdx = $scope.data.length-1;   
+    var fnc0 = (data) => {
+        // Array.prototype.push.apply($scope.users, data);  
+        $scope.users = data;
+        self.userData.senderIdx = $scope.users.length-1;   
     } ;
-    var fnc2 =  (data) => $scope.data.push(data);
+    var fnc1 =  (data) => $scope.users.push(data);
+
+    var fnc2 =  (data) => {
+        $scope.messages.push(data.message);
+        let name = $scope.users[data.senderIdx].name;
+        console.log('receive message from ' + name);
+        console.log('message is ' + data.message);
+     
+    };
 
     var fnc3 = (leftIdx) => {
-        $scope.data.splice(leftIdx, 1);
+        $scope.users.splice(leftIdx, 1);
         if(data.leftIdx < self.userData.senderIdx)
             self.userData.senderIdx -= 1;
     };
-    var fncApply = (fnc, data) =>{
+    var fncApply = (kind, fnc, data) =>{
         // fnc(data);
         // $scope.$apply();
+        var tempFnc = null;
+        if(kind == 0 || kind == 1 || kind == 3){
+            tempFnc = () => fnc(data);
+        }
+        else{
+            tempFnc = () => fnc(data);
+        }
         $scope.$apply(() => fnc(data));
     };
-    $SocketService.initSocket(fnc1, fnc2, fnc3, fncApply);
-    // $scope.data = [];
+    $SocketService.initSocket([fnc0, fnc1, fnc2, fnc3, fncApply]);
+    // $scope.users = [];
 
     // $SocketService.setScope($scope);
     
 
 $scope.selectName = function(index){
     
-    $scope.data.push({name: 'lee'});
-    // $scope.$applyAsync(() => $scope.data.push({name: 'lee'}));
-    return;
+    // $scope.users.push({name: 'lee'});
+    // $scope.$applyAsync(() => $scope.users.push({name: 'lee'}));
+    // return;
     var sendMessage = {
         kind: 2,
         data: 'hello world',
         senderIdx: self.userData.senderIdx,
         receiverIdx: index
     };
-    self.socket.send(JSON.stringify(sendMessage));
+    $SocketService.send(JSON.stringify(sendMessage));
 };
 self.socket_onopen = function (){
     console.log('WebSocket connection is open for business, bienvenidos!');
@@ -56,21 +71,21 @@ self.socket_onmessage = function (message){
     let fnc = null;
     if(object.kind == 0){  
         fnc = () => {
-            Array.prototype.push.apply($scope.data, data);  
-            self.userData.senderIdx = $scope.data.length-1;   
+            Array.prototype.push.apply($scope.users, data);  
+            self.userData.senderIdx = $scope.users.length-1;   
         } 
     }
     else if(object.kind == 1){
-        fnc = () => $scope.data.push(data);
+        fnc = () => $scope.users.push(data);
     }
     else if(object.kind == 2){
-        console.log('receive message from ' + $scope.data[data.senderIdx].name);
+        console.log('receive message from ' + $scope.users[data.senderIdx].name);
         console.log('message is ' + data.data);
 
     }
     else if(object.kind == 3){
         fnc = () => {
-            $scope.data.splice(data.leftIdx, 1);
+            $scope.users.splice(data.leftIdx, 1);
             if(data.leftIdx < self.userData.senderIdx)
                 self.userData.senderIdx -= 1;
         }

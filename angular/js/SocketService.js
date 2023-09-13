@@ -6,42 +6,39 @@ var SocketService =  function(){
     };
     this.userName = '';
     var self = this;
-    self.fnc1 = null;
-    self.fnc2 = null;
-    self.fnc3 = null;
+  
     self.fncApply = null;
     self.data = [];
     self.init = false;
-  
-    this.initSocket = function(fnc1, fnc2, fnc3, fncApply){
+    //fnc0, fnc1, fnc3, fncApply
+    this.initSocket = function(...args){
         if(self.init)
             return;
+        args['0'].forEach(function(v, idx){
+            self[v.name] = v;
+        });
         this.socket  = new WebSocket('ws://localhost:8080' + '/ws?name='+this.userName);
         this.socket.onopen = socket_onopen;
         this.socket.onmessage = socket_onmessage;
         this.socket.onclose = socket_onclose;
-        self.fnc1 = fnc1;
-        self.fnc2 = fnc2;
-        self.fnc3 = fnc3;
-        self.fncApply = fncApply;
+        // self.fnc0 = fnc0;
+        // self.fnc1 = fnc1;
+        // self.fnc3 = fnc3;
+        
+        // self.fncApply = fncApply;
         self.init = true;
     }
     // this.setScope = function(scope){
     //     self.scope = scope;
     // }
 
-    this.selectName = function(index){
-        var sendMessage = {
-            kind: 2,
-            data: 'hello world',
-            senderIdx: this.userData.senderIdx,
-            receiverIdx: index
-        };
-        this.socket.send(JSON.stringify(sendMessage));
+    this.send = function(json)
+    {
+        this.socket.send(json);
     };
     var socket_onopen = function (){
         console.log('WebSocket connection is open for business, bienvenidos!');
-    }
+    };
     var socket_onmessage = function (message){
         let object = JSON.parse(message.data);  
         let data = null;
@@ -49,25 +46,24 @@ var SocketService =  function(){
             data = JSON.parse(object.data);
         let fnc = null;
         if(object.kind == 0){  
-            fnc = self.fnc1;
+            fnc = self.fnc0;
         }
         else if(object.kind == 1){
-            fnc = self.fnc2;
+            fnc = self.fnc1;
         }
         else if(object.kind == 2){
-            console.log('receive message from ' + self.scope.data[data.senderIdx].name);
-            console.log('message is ' + data.data);
-
+            fnc = self.fnc2;
+            
+            data = {senderIdx: data.senderIdx, message: data.data};
         }
         else if(object.kind == 3){
             
             fnc = self.fnc3;
+            data = data.leftIdx;
         }
         if(fnc)
         {
-            if(object.kind == 3)
-                data = data.leftIdx;
-            self.fncApply(fnc, data);
+            self.fncApply(object.kind, fnc, data);
         }
             
         // fnc(data);
