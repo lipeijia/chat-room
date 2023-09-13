@@ -7,85 +7,26 @@
 <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
     <title>hello</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.min.js" integrity="sha512-KZmyTq3PLx9EZl0RHShHQuXtrvdJ+m35tuOiwlcZfs/rE7NZv29ygNA8SFCkMXTnYZQK2OX0Gm2qKGfvWEtRXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-route/1.8.3/angular-route.min.js" integrity="sha512-y1qD3hz/IAf8W4+/UMLZ+CN6LIoUGi7srWJ3r1R17Hid8x0yXe+1B5ZelkaL1Mjzedzu0Cg3HBvDG02SAgSzBw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="angular/js/RoomController.js"></script>
+    <script src="angular/js/HomeController.js"></script>
+    <script src="angular/js/SocketService.js"></script>
     <script>
-
-        angular.module("app", [])
-          .controller('Ctrl',  ['$scope', function($scope) {
-                var self = this;  
-                self.socket = null;
-                self.userData = {
-                    senderIdx: 0,
-                    receiverIdx: 0
-                };
-                $scope.data = [];
-            
-            self.click1 = function(){
-                let name = document.getElementById('input').value;
-                self.socket = new WebSocket('ws://localhost:8080' + '/ws?name='+name);
-                self.socket.onopen = self.socket_onopen;
-                self.socket.onmessage = self.socket_onmessage;
-                self.socket.onclose = self.socket_onclose;
-                var a = 1;
-              
-            };
-            self.selectName = function(index){
-                var sendMessage = {
-                    kind: 2,
-                    data: 'hello world',
-                    senderIdx: self.userData.senderIdx,
-                    receiverIdx: index
-                };
-                self.socket.send(JSON.stringify(sendMessage));
-            };
-            self.socket_onopen = function (){
-                console.log('WebSocket connection is open for business, bienvenidos!');
-            }
-            self.socket_onmessage = function (message){
-                let object = JSON.parse(message.data);  
-                let data = null;
-                if(typeof(object) =="object")
-                    data = JSON.parse(object.data);
-                let fnc = null;
-                if(object.kind == 0){  
-                    fnc = () => {
-                        Array.prototype.push.apply($scope.data, data);  
-                        self.userData.senderIdx = $scope.data.length-1;   
-                    } 
-                }
-                else if(object.kind == 1){
-                    fnc = () => $scope.data.push(data);
-                }
-                else if(object.kind == 2){
-                    console.log('receive message from ' + $scope.data[data.senderIdx].name);
-                    console.log('message is ' + data.data);
-
-                }
-                else if(object.kind == 3){
-                    fnc = () => {
-                        $scope.data.splice(data.leftIdx, 1);
-                        if(data.leftIdx < self.userData.senderIdx)
-                            self.userData.senderIdx -= 1;
-                    }
-                }
-                if(fnc)
-                    $scope.$apply(fnc);
-                var k = 1;
-            }
-            self.socket_onclose = function (){
-                console.log('WebSocket connection closed');
-            }
-        
-          }]);
+        angular.module("app", ['ngRoute'])
+            .service('$SocketService', SocketService)
+            .controller('RoomCtrl', RoomController)
+            .controller('HomeCtrl', HomeController)
+            .config(['$routeProvider', function($routeProvider){
+                $routeProvider
+            .when('/',{templateUrl:'angular/view/Home.html', controller: 'HomeCtrl'})
+            .when('/Room',{templateUrl:'angular/view/Room.html', controller: 'RoomCtrl'})
+            .otherwise({redirectTo:'/'});
+        }]);
     </script>
-    
+
 </head>
-<body ng-app="app" ng-controller="Ctrl as ctrl">
-<button ng-click="ctrl.click1()">login</button>
-<input id="input" type="text">
-              
-<div ng-repeat="item in data track by $index">
-    <span ng-bind="item.name" ng-click="ctrl.selectName($index)"></span>
-</div>
+<body ng-app="app" >
+
+<div ng-view ></div>
 </body>
 </html>

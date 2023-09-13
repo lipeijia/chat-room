@@ -29,6 +29,7 @@ function Room() {
     if (!data || !name) return;
     return data.findIndex((p) => p.name === name);
   }, [data, name]);
+  var self = this;
 
   useEffect(() => {
     if (!name || !!socket) return;
@@ -38,6 +39,7 @@ function Room() {
     _socket.onmessage = socket_onmessage;
     _socket.onclose = socket_onclose;
     _socket.onSend = socket_onsend;
+    _socket.cusData = data;
 
     function socket_onopen(val) {
       console.log('connect: ', val);
@@ -59,10 +61,13 @@ function Room() {
       let resData;
       switch (res.kind) {
         case 0: //新聊天室
+     
           setData(JSON.parse(res.data));
+          var k = 1;
           break;
         case 1: //有人加入
           const _newPerson = JSON.parse(res.data);
+          this.cusData.push(_newPerson);
           setData((prev) => [...prev, _newPerson]);
           break;
         case 2: //接收密語
