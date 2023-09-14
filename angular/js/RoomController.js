@@ -48,13 +48,9 @@ var RoomController =  ['$scope', '$route', '$SocketService',
     
 
 $scope.selectName = function(index){
-    
-    // $scope.users.push({name: 'lee'});
-    // $scope.$applyAsync(() => $scope.users.push({name: 'lee'}));
-    // return;
     var sendMessage = {
         kind: 2,
-        data: 'hello world',
+        data: this.message,
         senderIdx: self.userData.senderIdx,
         receiverIdx: index
     };
