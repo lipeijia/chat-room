@@ -17,7 +17,7 @@ var RoomController =  ['$scope', '$route', '$SocketService',
     var fnc1 =  (data) => $scope.users.push(data);
 
     var fnc2 =  (data) => {
-        $scope.messages.push(data.message);
+        $scope.messages.push({msg: data.message, senderIdx: data.senderIdx});
         let name = $scope.users[data.senderIdx].name;
         console.log('receive message from ' + name);
         console.log('message is ' + data.message);
@@ -48,14 +48,19 @@ var RoomController =  ['$scope', '$route', '$SocketService',
     
 
 $scope.selectName = function(index){
+    self.index = index;
+   
+};
+$scope.say = function()
+{
     var sendMessage = {
         kind: 2,
         data: this.message,
         senderIdx: self.userData.senderIdx,
-        receiverIdx: index
+        receiverIdx: self.index
     };
     $SocketService.send(JSON.stringify(sendMessage));
-};
+}
 self.socket_onopen = function (){
     console.log('WebSocket connection is open for business, bienvenidos!');
 }

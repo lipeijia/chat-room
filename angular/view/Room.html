@@ -1,4 +1,17 @@
-<div ng-repeat="item in users track by $index">
-    <span ng-bind="item.name" ng-click="selectName($index)"></span>
+<div class="row">
+    <div class="col">
+        <div  ng-repeat="item in users track by $index">
+            <div ng-bind="item.name" ng-click="selectName($index)"></div>
+        </div>
+    </div>
+  
+    <div class="col">
+        <input  type="text" ng-model="message"> <button ng-click="say()">送出</button>
+        <div  ng-repeat="item in messages track by $index">
+            <span ng-bind="users[item.senderIdx].name"></span>
+            <span>    say: </span> <span ng-bind="item.msg"></span>
+        </div>
+    </div>
+   
 </div>
-<input type="text" ng-model="message">
+
