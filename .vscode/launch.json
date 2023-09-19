@@ -8,8 +8,8 @@
             "name": "Launch Edge",
             "request": "launch",
             "type": "msedge",
-            // "url": "http://localhost:89/example.html",
-            "url": "http://localhost:3000/",
+            "url": "http://localhost:89/example.html",
+            // "url": "http://localhost:3000/",
             "webRoot": "${workspaceFolder}",
          
         },

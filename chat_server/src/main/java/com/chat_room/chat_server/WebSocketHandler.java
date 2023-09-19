@@ -72,23 +72,21 @@ class PM extends ReceiveBase
 
 class RoomData{
     private List<Room_guy> guys;
-    private List<WebSocketSession> sockets;
+    private  volatile List<WebSocketSession> sockets;
     public RoomData(){
         guys = new ArrayList<>();
         sockets = new ArrayList<>();
     }
-     public int Remove(WebSocketSession socket){
-        int index = sockets.indexOf(socket);
-        if(index < 0)
-            return -1;
-        try {
+    public int Remove(WebSocketSession socket){
+        int index;
+        synchronized(sockets){
+            index = sockets.indexOf(socket);
+            if(index == -1)
+                return -1;
             sockets.remove(index);
             guys.remove(index);
-        } catch (Exception e) {
-            // TODO: handle exception
-            return -1;
         }
-      
+
         return index;
     }
     public boolean Add(String name, WebSocketSession s){
@@ -118,7 +116,7 @@ class Room extends HashMap<String, RoomData>{
     private volatile static Room Instance;
 
     private Room(){ }
-    public static synchronized  RoomData getInstance(String key){
+    public static RoomData getInstance(String key){
         if(Instance == null){
             synchronized (Room.class){
                 if(Instance == null)
@@ -164,9 +162,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
         List<WebSocketSession> sockets = Room.getInstance(path).GetSockets();
         Room_guy newGuy = new Room_guy(s.get("name"), session.getId());
         m.kind = 1;
+        WebSocketSession ss = null;
         for (int i = 0; i < sockets.size(); i++) {
             m.data = objectMapper.writeValueAsString(newGuy);
-            sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+            synchronized(sockets.get(i)){
+                sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+       
+            }
         }
      
         m.kind = 0;
@@ -174,7 +176,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         guys = Room.getInstance(path).RoomGuys();
         m.data = objectMapper.writeValueAsString(guys);
-        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+        int p2 = session.hashCode();
+        synchronized(session){
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+        }
+
         System.out.println("Connection established from " + session.toString() +
                 " @ " + Instant.now().toString());
     }
@@ -239,18 +245,24 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
 
     }
-
+    // synchronized
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status)
+    public  void afterConnectionClosed(WebSocketSession session, CloseStatus status)
             throws Exception {
         String path = session.getUri().getPath();
         int leftIdx = Room.getInstance(path).Remove(session);
+        if (leftIdx == -1)
+            return;
         ObjectMapper objectMapper = new ObjectMapper();
         Message m = new Message();    
         m.writeDisConnect(leftIdx);
         List<WebSocketSession> sockets = Room.getInstance(path).GetSockets();
         for (WebSocketSession webSocketSession : sockets) {
-            webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+            synchronized(webSocketSession){
+                if (webSocketSession != null && webSocketSession.isOpen())
+                    webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+            }
+           
         }
         System.out.println("Connection closed by " + session.toString() +
                 " @ " + Instant.now().toString());
