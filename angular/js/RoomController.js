@@ -26,7 +26,8 @@ var RoomController =  ['$scope', '$route', '$SocketService',
 
     var fnc3 = (leftIdx) => {
         $scope.users.splice(leftIdx, 1);
-        if(data.leftIdx < self.userData.senderIdx)
+        console.log(leftIdx);
+        if(leftIdx < self.userData.senderIdx)
             self.userData.senderIdx -= 1;
     };
     var fncApply = (kind, fnc, data) =>{

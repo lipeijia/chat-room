@@ -12,6 +12,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     WebSocketConfig(WebSocketHandler handler) {
         this.handler = handler;
+
     }
 
     @Override

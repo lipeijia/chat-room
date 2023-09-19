@@ -15,10 +15,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 class Room_guy {
@@ -72,20 +69,20 @@ class PM extends ReceiveBase
 
 class RoomData{
     private List<Room_guy> guys;
-    private  volatile List<WebSocketSession> sockets;
+    private   List<WebSocketSession> sockets;
     public RoomData(){
         guys = new ArrayList<>();
         sockets = new ArrayList<>();
     }
     public int Remove(WebSocketSession socket){
         int index;
-        synchronized(sockets){
-            index = sockets.indexOf(socket);
-            if(index == -1)
-                return -1;
-            sockets.remove(index);
-            guys.remove(index);
-        }
+
+        index = sockets.indexOf(socket);
+        if(index == -1)
+            return -1;
+        sockets.remove(index);
+        guys.remove(index);
+
 
         return index;
     }
@@ -104,7 +101,7 @@ class RoomData{
 //        m.put("names", names);
 //        m.put("ids", ids);return m;
     }
-    public List<WebSocketSession> GetSockets(){
+    public List<WebSocketSession>  GetSockets(){
         return sockets;
 //        HashMap<String , Object> m = new HashMap<>();
 //        m.put("names", names);
@@ -136,19 +133,47 @@ class Room extends HashMap<String, RoomData>{
 //@RequiredArgsConstructor
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
+    volatile Stack<WebSocketSession> removedSocket = new Stack<>();
+
     public WebSocketHandler(){
+        new Thread(()->{
+            while (true){
+                try {
+                    Thread.sleep(600);
+                    List<Message> temp = new ArrayList<>();
+                    final  String path = removedSocket.size() > 0  ?  removedSocket.get(0).getUri().getPath() : "";
+                    while (removedSocket.size() > 0){
+                        WebSocketSession session = removedSocket.pop();
+                        int leftIdx = Room.getInstance(path).Remove(session);
+                        Message m = new Message();
+                        m.writeDisConnect(leftIdx);
+                        temp.add(m);
+                    }
+                    if(path != ""){
+                        new Thread(() -> {
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            List<WebSocketSession> sockets  = Room.getInstance(path).GetSockets();
+                            for (int i = 0; i < sockets.size(); i++) {
 
+                                for (int j = 0; j < temp.size(); j++) {
+                                    try{
+                                        sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(temp.get(j))));
+                                    }
+                                    catch (Exception exception){
+                                        System.out.println(exception.toString());
+                                    }
+                                }
+                            }
+                        }).start();
+                 }
+                }
+                catch (Exception ex){
+                }
+            }
+        }).start();
     }
-    private final HashMap<String , WebSocketSession> sessionMap = new HashMap<>();
-
-
-    public HashMap<String , WebSocketSession> getSessionMap() {
-        return sessionMap;
-    }
-
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception{
-//        sessionMap.put(session.getId(), session);
         ObjectMapper objectMapper = new ObjectMapper();
         String path = session.getUri().getPath();
 
@@ -170,10 +195,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
        
             }
         }
-     
         m.kind = 0;
         boolean success = Room.getInstance(path).Add(s.get("name"), session);
-
         guys = Room.getInstance(path).RoomGuys();
         m.data = objectMapper.writeValueAsString(guys);
         int p2 = session.hashCode();
@@ -208,7 +231,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
         ObjectMapper mapper = new ObjectMapper();
         Message recvMessage = null;
         Pattern p = Pattern.compile("^\\{\"kind\":(\\d+),.*");
-        
         int kind = -1;
         Matcher mat = p.matcher(s);
         if (mat.find( )) {
@@ -223,7 +245,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 int idx = sockets.indexOf(session);
                 if (idx < 0 )
                     return;
-
                 ObjectMapper objectMapper = new ObjectMapper();
                 PM pm = objectMapper.readValue(s, PM.class);
                 Message m = new Message();    
@@ -243,27 +264,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
         }
         float a = 11;
 
-
     }
-    // synchronized
     @Override
-    public  void afterConnectionClosed(WebSocketSession session, CloseStatus status)
+    public   void   afterConnectionClosed(WebSocketSession session, CloseStatus status)
             throws Exception {
-        String path = session.getUri().getPath();
-        int leftIdx = Room.getInstance(path).Remove(session);
-        if (leftIdx == -1)
-            return;
-        ObjectMapper objectMapper = new ObjectMapper();
-        Message m = new Message();    
-        m.writeDisConnect(leftIdx);
-        List<WebSocketSession> sockets = Room.getInstance(path).GetSockets();
-        for (WebSocketSession webSocketSession : sockets) {
-            synchronized(webSocketSession){
-                if (webSocketSession != null && webSocketSession.isOpen())
-                    webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
-            }
-           
-        }
+        removedSocket.add(session);
+
         System.out.println("Connection closed by " + session.toString() +
                 " @ " + Instant.now().toString());
     }

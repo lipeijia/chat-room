@@ -11,7 +11,7 @@ urL2='ws://localhost:89/example.html/ws?name='
 edge = webdriver.Edge()
 
 # webbrowser.register('edge', None,webbrowser.BackgroundBrowser(chrome_path))
-for i in range(15):
+for i in range(20):
     if i == 0:
         edge.get(urL1)
     else:
