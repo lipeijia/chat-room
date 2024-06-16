@@ -13,26 +13,28 @@ import {
 } from '@chakra-ui/react';
 
 function Room() {
-  const [socket, setSocket] = useState(null);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState([]);
   const [text, setText] = useState('');
   const [talkTo, setTalkTo] = useState('');
   const [messageHistory, setMessageHistory] = useState([]);
+  const socket = useRef();
   const ref = useRef();
   const navigate = useNavigate();
   const location = useLocation();
+  
   const name = useMemo(
     () => new URLSearchParams(location.search).get('name'),
     [location.search]
   );
+  
   const selfIdx = useMemo(() => {
     if (!data || !name) return;
     return data.findIndex((p) => p.name === name);
   }, [data, name]);
-  var self = this;
 
   useEffect(() => {
-    if (!name || !!socket) return;
+
+    if (!name || !!socket?.current) return;
     const url = `ws://localhost:8080/ws?name=${name}`;
     const _socket = new WebSocket(url);
     _socket.onopen = socket_onopen;
@@ -61,14 +63,13 @@ function Room() {
       let resData;
       switch (res.kind) {
         case 0: //新聊天室
-     
+
           setData(JSON.parse(res.data));
-          var k = 1;
           break;
         case 1: //有人加入
           const _newPerson = JSON.parse(res.data);
-          this.cusData.push(_newPerson);
           setData((prev) => [...prev, _newPerson]);
+          this.cusData.push(_newPerson);
           break;
         case 2: //接收密語
           resData = JSON.parse(res.data);
@@ -96,7 +97,8 @@ function Room() {
       console.log('disconnect: ', val);
       navigate('/');
     }
-    setSocket({ ..._socket });
+
+    socket.current = _socket;
     // eslint-disable-next-line
   }, [name, socket]);
 
@@ -110,18 +112,11 @@ function Room() {
   };
 
   const handleTalk = (val) => {
-    socket.onSend(2, val, selfIdx, talkTo);
-    let _current = {
-      sender: data[selfIdx].name,
-      receiver: data[talkTo].name,
-      data: val
-    };
-    console.log(_current);
-    setMessageHistory((prev) => [...prev, _current]);
+    socket.current.onSend(2, val, selfIdx, talkTo);
+    // setMessageHistory((prev) => [...prev, _current]);
     setText('');
   };
 
-  if (!data) return;
   return (
     <>
       <Box px={3} py={3} position='relative'>
@@ -158,7 +153,7 @@ function Room() {
           p={4}
           background='purple.100'
         >
-          <Text mb={2}>對{talkTo !== '' ? data[talkTo].name : '大家'}說：</Text>
+          <Text mb={2}>對大家說：</Text>
           <InputGroup>
             <Input
               name='text'
@@ -183,7 +178,7 @@ function Room() {
         {messageHistory?.map((m, idx) => (
           <div key={idx}>
             <p>
-              {m.sender} 對{m.receiver} 説:
+              對大家説:
             </p>
             <p>{m?.data}</p>
           </div>
