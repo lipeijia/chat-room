@@ -9,9 +9,17 @@
             "request": "launch",
             "type": "msedge",
             "url": "http://localhost:89/example.html",
-            // "url": "http://localhost:3000/",
-            "webRoot": "${workspaceFolder}",
-         
+            "webRoot": "${workspaceFolder}"
         },
+        {
+            "type": "java",
+            "name": "Spring Boot-ChatServerApplication<chat_server>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.chat_room.chat_server.ChatServerApplication",
+            "projectName": "chat_server",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
     ]
 }
