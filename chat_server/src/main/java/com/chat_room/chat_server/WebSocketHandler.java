@@ -250,13 +250,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 Message m = new Message();    
                 
                 m.writePM(pm.senderIdx, pm.receiverIdx, pm.data);
-                
-                for (int i = 0; i < sockets.size(); i++) {
-                    sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
-                }
-                //pm
-                // sockets.get(pm.receiverIdx).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
-             
+                sockets.get(pm.senderIdx).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+                sockets.get(pm.receiverIdx).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+            
+                // for (int i = 0; i < sockets.size(); i++) {
+                //     sockets.get(i).sendMessage(new TextMessage(objectMapper.writeValueAsString(m)));
+                // }
+               
             }
             int kk = 1;
         } catch (IOException e) {
