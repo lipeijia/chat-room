@@ -69,15 +69,21 @@ function Room() {
         case 0: //新聊天室
 
           // setData(JSON.parse(res.data));
-          data.current = JSON.parse(res.data)
-          let idx1 = data.current.findIndex((p) => p.name === name);
-          setSelfIdx(idx1);
+          var resdata = JSON.parse(res.data);
+          data.current = resdata.guys;
+          // let idx1 = data.current.map((person, id) => {
+
+          // });
+          // Object.entries(data.current).forEach(([key, value]) => {
+          //   console.log(key, value);
+          // });
+          setSelfIdx(resdata.id);
           setRenderTrigger((prev) => prev+1);
           break;
         case 1: //有人加入
           const _newPerson = JSON.parse(res.data);
           // setData((prev) => [...prev, _newPerson]);
-          data.current.push(_newPerson);
+          data.current[_newPerson.id] = _newPerson.guy;
           setRenderTrigger((prev) => prev+1);
           // this.cusData.push(_newPerson);
           break;
@@ -93,8 +99,10 @@ function Room() {
           break;
         case 3: // 斷線
           resData = JSON.parse(res.data);
-          const updateList = () =>
-            [...data].filter((_, index) => index !== resData?.leftIdx);
+          delete data.current[resData.leftIdx];
+          setRenderTrigger((prev) => prev+1);
+          // const updateList = () =>
+          //   [...data].filter((_, index) => index !== resData?.leftIdx);
           // setData(updateList);
           break;
         default:
@@ -112,10 +120,10 @@ function Room() {
     // eslint-disable-next-line
   }, [name, socket]);
 
-  useOutsideClick({
-    ref: ref,
-    handler: () => setTalkTo('')
-  });
+  // useOutsideClick({
+  //   ref: ref,
+  //   handler: () => setTalkTo('')
+  // });
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -128,55 +136,58 @@ function Room() {
   };
 
   return (
-    <>
-      <Box px={3} py={3} position='relative'>
-        <Text fontSize='2xl'>匿名聊天室</Text>
-      </Box>
-      <Box mx={2} ref={ref}>
-        {data.current?.map((person, index) => (
-          <HStack
-            key={`${index}-${person.id}`}
-            borderTop='1px solid gray'
-            id={person.id}
-            index={index}
-            p={2}
-            _hover={{ cursor: 'pointer' }}
-            onClick={
-              name !== data.current[index].name
-                ? () => {
-                    setTalkTo(index);
-                    console.log(index);
-                  }
-                : null
+    <Box display="flex" flexDirection="row" height="100vh">
+      {/* 左側：聊天內容區域 */}
+      <Box flex="1" display="flex" flexDirection="column" borderRight="1px solid gray">
+        <Box flex="1" overflowY="auto" p={4}>
+          <Text fontSize="2xl" mb={4}>聊天內容</Text>
+          {messageHistory?.map((m, idx) => {
+            if (m?.sender && m?.receiver) {
+              return (
+                <Box key={idx} mb={4}>
+                  <Text fontWeight="bold">{`${m.sender} 對 ${m.receiver} 說:`}</Text>
+                  <Text>{m.data || "（無內容）"}</Text>
+                </Box>
+              );
+            } else if (m?.sender) {
+              return (
+                <Box key={idx} mb={4}>
+                  <Text fontWeight="bold">{`${m.sender} 對大家說:`}</Text>
+                  <Text>{m.data || "（無內容）"}</Text>
+                </Box>
+              );
+            } else if (m?.receiver) {
+              return (
+                <Box key={idx} mb={4}>
+                  <Text fontWeight="bold">{`匿名對 ${m.receiver} 說:`}</Text>
+                  <Text>{m.data || "（無內容）"}</Text>
+                </Box>
+              );
+            } else {
+              return (
+                <Box key={idx} mb={4}>
+                  <Text fontWeight="bold">匿名對大家說:</Text>
+                  <Text>{m.data || "（無內容）"}</Text>
+                </Box>
+              );
             }
-          >
-            <Avatar name={person.name} />
-            <Text fontSize='lg'>{person.name}</Text>
-          </HStack>
-        ))}
-        <Box
-          position='fixed'
-          bottom={0}
-          left={0}
-          zIndex={9}
-          w='100%'
-          p={4}
-          background='purple.100'
-        >
+          })}
+        </Box>
+        <Box p={4} background="purple.100" borderTop="1px solid gray">
           <Text mb={2}>對大家說：</Text>
           <InputGroup>
             <Input
-              name='text'
+              name="text"
               value={text}
-              background='#fff'
+              background="#fff"
               onChange={handleChange}
             />
-            <InputRightElement width='4.5rem'>
+            <InputRightElement width="4.5rem">
               <Button
-                h='1.75rem'
-                size='sm'
+                h="1.75rem"
+                size="sm"
                 onClick={() => handleTalk(text)}
-                type='button'
+                type="button"
               >
                 送出
               </Button>
@@ -184,45 +195,39 @@ function Room() {
           </InputGroup>
         </Box>
       </Box>
-      <Box>
-  {messageHistory?.map((m, idx) => {
-    if (m?.sender && m?.receiver) {
-      // 有發送者和接收者
-      return (
-        <div key={idx}>
-          <p>{`${m.sender} 對 ${m.receiver} 說:`}</p>
-          <p>{m.data || "（無內容）"}</p>
-        </div>
-      );
-    } else if (m?.sender) {
-      // 僅有發送者，無接收者，表示廣播
-      return (
-        <div key={idx}>
-          <p>{`${m.sender} 對大家說:`}</p>
-          <p>{m.data || "（無內容）"}</p>
-        </div>
-      );
-    } else if (m?.receiver) {
-      // 無發送者但有接收者，表示匿名消息
-      return (
-        <div key={idx}>
-          <p>{`匿名對 ${m.receiver} 說:`}</p>
-          <p>{m.data || "（無內容）"}</p>
-        </div>
-      );
-    } else {
-      // 完全匿名的廣播
-      return (
-        <div key={idx}>
-          <p>匿名對大家說:</p>
-          <p>{m.data || "（無內容）"}</p>
-        </div>
-      );
-    }
-  })}
-</Box>
-    </>
+  
+      {/* 右側：聊天室名稱與人員列表 */}
+      <Box width="300px" display="flex" flexDirection="column" p={4}>
+        <Box px={3} py={3} position="relative" mb={4} textAlign="right">
+          <Text fontSize="2xl">匿名聊天室</Text>
+        </Box>
+        <Box flex="1" overflowY="auto" ref={ref}>
+          {Object.entries(data.current).map(([index, person]) => (
+            <HStack
+              key={index}
+              borderTop="1px solid gray"
+              p={2}
+              _hover={{ cursor: "pointer" }}
+              onClick={
+                name !== data.current[index].name
+                  ? () => {
+                      setTalkTo(index);
+                      console.log(index);
+                    }
+                  : null
+              }
+              justifyContent="flex-end"
+            >
+              <Text fontSize="lg" mr={2}>{person.name}</Text>
+              <Avatar name={person.name} />
+            </HStack>
+          ))}
+        </Box>
+      </Box>
+    </Box>
   );
+  
+  
 }
 
 export default Room;
