@@ -11,7 +11,7 @@ import {
   InputRightElement,
   useOutsideClick
 } from '@chakra-ui/react';
-
+import FancyButton from "../../components/buttons";
 function Room() {
   // const [data, setData] = useState([]);
   let data = useRef([])
@@ -29,6 +29,7 @@ function Room() {
     () => new URLSearchParams(location.search).get('name'),
     [location.search]
   );
+ 
   // const selfIdx = -1;
   // const selfIdx = useMemo(() => {
   //   // if (!data || !name) return;
@@ -136,7 +137,9 @@ function Room() {
   };
 
   return (
+
     <Box display="flex" flexDirection="row" height="100vh">
+    
       {/* 左側：聊天內容區域 */}
       <Box flex="1" display="flex" flexDirection="column" borderRight="1px solid gray">
         <Box flex="1" overflowY="auto" p={4}>
@@ -173,7 +176,7 @@ function Room() {
             }
           })}
         </Box>
-        <Box p={4} background="purple.100" borderTop="1px solid gray">
+        <Box p={4} background="purple.100" borderTop="1px solid gray" position="sticky" bottom={0}>
           <Text mb={2}>對大家說：</Text>
           <InputGroup>
             <Input
@@ -183,25 +186,23 @@ function Room() {
               onChange={handleChange}
             />
             <InputRightElement width="4.5rem">
-              <Button
-                h="1.75rem"
-                size="sm"
-                onClick={() => handleTalk(text)}
-                type="button"
+              <FancyButton
+                delegate={() => handleTalk(text)}
+                text="送出"
               >
-                送出
-              </Button>
+                
+              </FancyButton>
             </InputRightElement>
           </InputGroup>
         </Box>
       </Box>
   
       {/* 右側：聊天室名稱與人員列表 */}
-      <Box width="300px" display="flex" flexDirection="column" p={4}>
+      <Box width="300px" display="flex" flexDirection="column" p={4} >
         <Box px={3} py={3} position="relative" mb={4} textAlign="right">
           <Text fontSize="2xl">匿名聊天室</Text>
         </Box>
-        <Box flex="1" overflowY="auto" ref={ref}>
+        <Box flex="1" width="300px" overflowY="scroll" scrollPaddingRight="17px" paddingRight="23px" ref={ref}>
           {Object.entries(data.current).map(([index, person]) => (
             <HStack
               key={index}

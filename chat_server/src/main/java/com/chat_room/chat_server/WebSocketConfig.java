@@ -19,6 +19,5 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // registry.addHandler(handler, "/ws").setAllowedOrigins("http://localhost:3000");
         registry.addHandler(handler, "/ws").setAllowedOrigins("*");
-        registry.addHandler(handler, "/ws2").setAllowedOrigins("*");
     }
 }
