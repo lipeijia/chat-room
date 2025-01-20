@@ -8,7 +8,7 @@ const WebSocketClient = () => {
 
   useEffect(() => {
     // 初始化 STOMP 客戶端
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("http://localhost:8080/stomp?name=haha");
     const client = new Client({
       webSocketFactory: () => socket,
       onConnect: () => {
@@ -30,7 +30,7 @@ const WebSocketClient = () => {
   }, []);
 
   const sendMessage = () => {
-    const socket = new SockJS("http://localhost:8080/ws");
+    const socket = new SockJS("http://localhost:8080/stomp");
     const client = new Client({
       webSocketFactory: () => socket,
     });
