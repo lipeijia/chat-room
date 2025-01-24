@@ -1,8 +1,11 @@
 package com.chat_room.chat_server;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
+
+import com.chat_room.chat_server.RoomService.RoomGuy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RoomService {
    
     public HashMap<String, RoomGuy> guysMap = new HashMap<>();
+    public HashMap<String, Room> roomsMap = new HashMap<>();
     class RoomGuy {
         @JsonProperty("name")
         public String name;
@@ -19,18 +23,28 @@ public class RoomService {
             this.userId = userId;
         }
     }
-    public boolean AddUser(String name, String sessionId, String userId){
+    public boolean AddUser(String name, String roomId, String sessionId, String userId){
         if(guysMap.containsKey(sessionId))
             return false;
         
+        roomsMap.putIfAbsent(roomId, new Room(roomId));
+
+        Room room = roomsMap.get(roomId);
+        RoomGuy newGuy = new RoomGuy(name, userId);
+        boolean checkmember = room.addMember(sessionId, newGuy);
+        if(!checkmember)
+            return false;
+
         guysMap.put(sessionId, new RoomGuy(name, userId));
         return true;
     }
-    public boolean RemoveUser(String sessionId){
+    public boolean RemoveUser(String sessionId, String roomId){
         if(!guysMap.containsKey(sessionId))
             return false;
         
+        roomsMap.get(roomId).removeMember(sessionId);
         guysMap.remove(sessionId);
+
         return true;
     }
     public String GetUserName(String sessionId){
@@ -39,4 +53,43 @@ public class RoomService {
         
         return guysMap.get(sessionId).name;
     }
+    public void GetRoomMembers(){
+
+    }
+
+
+    class Room {
+        private String roomId;
+        private Map<String, RoomGuy> members; // 存放每個房間中的成員
+
+        public Room(String roomId) {
+            this.roomId = roomId;
+            this.members = new HashMap<>();
+        }
+
+        public String getRoomId() {
+            return roomId;
+        }
+
+        public Map<String, RoomGuy> getMembers() {
+            return members;
+        }
+
+        public boolean addMember(String sessionId, RoomGuy guy) {
+            if (members.containsKey(sessionId)) {
+                return false; // 成員已經在房間內
+            }
+            members.put(sessionId, guy);
+            return true;
+        }
+
+        public boolean removeMember(String sessionId) {
+            if (members.containsKey(sessionId)) {
+                members.remove(sessionId);
+                return true;
+            }
+            return false; // 成員不存在
+        }
+    }
+
 }

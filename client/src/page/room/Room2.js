@@ -26,7 +26,7 @@ function Room() {
   const ref = useRef();
   const navigate = useNavigate();
   const location = useLocation();
-  
+  const roomId = Math.floor(Math.random() * 2) + 1;
   const name = useMemo(
     () => new URLSearchParams(location.search).get('name'),
     [location.search]
@@ -55,11 +55,11 @@ function Room() {
         console.log('已連接到 STOMP');
 
         // 訂閱主題以接收訊息
-        client.current.subscribe('/topic/message', (message)=>{
+        client.current.subscribe(`/topic/room.${roomId}/message`, (message)=>{
           let d = JSON.parse(message.body);
           setMessageHistory((prev) => [...prev, data.current[d.userId].name + "對大家說" + d.message]);
         });
-        client.current.subscribe('/topic/disconnect', (message)=>{
+        client.current.subscribe(`/topic/room.${roomId}/disconnect`, (message)=>{
           var k = 1;
           let msg = data.current[message.body].name + "已離開房間";
           setMessageHistory((prev) => [...prev, msg]);
@@ -69,7 +69,7 @@ function Room() {
           // setMessageHistory((prev) => [...prev, data.current[d.userId].name + "對大家說" + d.message]);
         });
         client.current.subscribe('/user/queue/newUser', (message)=>{
-          client.current.subscribe('/topic/newUser', (message)=>{
+          client.current.subscribe(`/topic/${roomId}/newUser`, (message)=>{
             const resdata = JSON.parse(message.body);
             data.current = Object.assign({}, data.current, resdata);
             
@@ -92,7 +92,10 @@ function Room() {
         // };
         client.current.publish({
           destination: '/app/chat.join', // 根據你的服務器端點進行調整
-          body: name
+          body: JSON.stringify({ 
+            name: name, 
+            roomId: roomId 
+        }) // 將對
         });
       },
       onDisconnect: () => {
@@ -131,7 +134,7 @@ function Room() {
       const handleBeforeUnload = () => {
         if (client.current && client.current.connected) {
           client.current.publish({
-            destination: '/app/disconnect',
+            destination: `/app/room.${roomId}/disconnect`,
             body: JSON.stringify({ message: 'Client is disconnecting' }),
           });
           client.current.deactivate(); // 优雅关闭连接
@@ -222,7 +225,7 @@ function Room() {
           var _destination;
           var _body;
           if (talkTo === '') {
-            _destination = '/app/chat.send';
+            _destination = `/app/chat.send/room.${roomId}`;
             _body = text;
           } else {
             _destination = '/app/chat.send.private';
