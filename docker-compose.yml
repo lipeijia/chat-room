@@ -1,6 +1,18 @@
 version: '3.8'
 services:
   myapp:
-    image: chatserver
+    image: bardlee504/chatserver:v1
     ports:
       - "8080:8080"
+  
+  react-app:
+    image: bardlee504/chatclient:v1
+
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+
