@@ -158,7 +158,7 @@ public class StompChatController {
         // msg.put("userId", principal.getName());
         // // 廣播新用戶訊息給其他人
         // this.simpMessagingTemplate.convertAndSendToUser(message.getSender(),"/queue/private", msg);
-        this.roomService.RemoveUser(sessionId, roomId);
+        this.roomService.RemoveUser(sessionId);
         String ss = String.format("/topic/room.%s/disconnect", roomId);
         this.simpMessagingTemplate.convertAndSend(ss, principal.getName());
         // 傳送歷史訊息給新用戶

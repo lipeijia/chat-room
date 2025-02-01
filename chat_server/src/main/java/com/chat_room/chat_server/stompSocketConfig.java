@@ -34,7 +34,8 @@ public class stompSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setAllowedOriginPatterns("*")// 允許跨域
                 .addInterceptors(new CustomHandshakeInterceptor())
                 .setHandshakeHandler(new CustomHandshakeHandler())
-                .withSockJS(); // 使用 SockJS
+                .withSockJS()// 使用 SockJS
+                .setHeartbeatTime(30000); 
     }
     //    @Override
     // public void configureClientInboundChannel(ChannelRegistration registration) {

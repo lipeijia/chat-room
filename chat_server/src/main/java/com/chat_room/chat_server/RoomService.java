@@ -18,9 +18,11 @@ public class RoomService {
         @JsonProperty("name")
         public String name;
         public String userId;
-        public RoomGuy(String name, String userId) {
+        public String roomId;
+        public RoomGuy(String name, String userId, String roomId) {
             this.name = name;
             this.userId = userId;
+            this.roomId = roomId;
         }
     }
     public boolean AddUser(String name, String roomId, String sessionId, String userId){
@@ -30,19 +32,23 @@ public class RoomService {
         roomsMap.putIfAbsent(roomId, new Room(roomId));
 
         Room room = roomsMap.get(roomId);
-        RoomGuy newGuy = new RoomGuy(name, userId);
+        RoomGuy newGuy = new RoomGuy(name, userId, roomId);
         boolean checkmember = room.addMember(sessionId, newGuy);
         if(!checkmember)
             return false;
 
-        guysMap.put(sessionId, new RoomGuy(name, userId));
+        guysMap.put(sessionId, newGuy);
         return true;
     }
-    public boolean RemoveUser(String sessionId, String roomId){
+    public boolean RemoveUser(String sessionId){
         if(!guysMap.containsKey(sessionId))
             return false;
-        
+        String roomId = guysMap.get(sessionId).roomId;
         roomsMap.get(roomId).removeMember(sessionId);
+        int n =   roomsMap.get(roomId).getMemeberSize();
+        if( n == 0){
+            roomsMap.remove(roomId);
+        }
         guysMap.remove(sessionId);
 
         return true;
@@ -89,6 +95,9 @@ public class RoomService {
                 return true;
             }
             return false; // 成員不存在
+        }
+        public int getMemeberSize(){
+            return members.keySet().size();
         }
     }
 
