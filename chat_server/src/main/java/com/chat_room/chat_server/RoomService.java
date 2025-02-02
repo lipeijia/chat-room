@@ -14,7 +14,7 @@ public class RoomService {
    
     public HashMap<String, RoomGuy> guysMap = new HashMap<>();
     public HashMap<String, Room> roomsMap = new HashMap<>();
-    class RoomGuy {
+    public class RoomGuy {
         @JsonProperty("name")
         public String name;
         public String userId;
@@ -64,7 +64,7 @@ public class RoomService {
     }
 
 
-    class Room {
+    public class Room {
         private String roomId;
         private Map<String, RoomGuy> members; // 存放每個房間中的成員
 

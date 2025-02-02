@@ -85,26 +85,30 @@ public class StompChatController {
         this.roomService.AddUser(joinDto.name, joinDto.roomId, sessionId, principal.getName());
         value.put("name", joinDto.name);
         transformedMap.put(principal.getName(), value);
-        this.simpMessagingTemplate.convertAndSend(String.format("/topic/%s/newUser", joinDto.roomId), transformedMap);
-        var v = this.simpUserRegistry.getUser(principal.getName());
-        var data = this.roomService.roomsMap.get(joinDto.roomId).getMembers().values();
-        transformedMap = new HashMap<>();
-        for (RoomGuy roomGuy : data) {
-            value = new HashMap<>();
-            value.put("name", roomGuy.name);
-            transformedMap.put(roomGuy.userId, value);
-        }
 
-        // 转换为 JSON
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            String json = objectMapper.writeValueAsString(transformedMap);
-            this.simpMessagingTemplate.convertAndSendToUser(
-                principal.getName(),"/queue/newUser", json);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-        int k =1;
+        this.messageProducer.sendJoinMessage(transformedMap, joinDto.roomId);
+
+
+        // this.simpMessagingTemplate.convertAndSend(String.format("/topic/%s/newUser", joinDto.roomId), transformedMap);
+        // // var v = this.simpUserRegistry.getUser(principal.getName());
+        var data = this.roomService.roomsMap.get(joinDto.roomId).getMembers().values();
+        // transformedMap = new HashMap<>();
+        // for (RoomGuy roomGuy : data) {
+        //     value = new HashMap<>();
+        //     value.put("name", roomGuy.name);
+        //     transformedMap.put(roomGuy.userId, value);
+        // }
+
+        // // 转换为 JSON
+        // ObjectMapper objectMapper = new ObjectMapper();
+        // try {
+        //     String json = objectMapper.writeValueAsString(transformedMap);
+        //     this.simpMessagingTemplate.convertAndSendToUser(
+        //         principal.getName(),"/queue/newUser", json);
+        // } catch (Exception e) {
+        //     // TODO: handle exception
+        // }
+        // int k =1;
     
         // 傳送歷史訊息給新用戶
         // this.simpMessagingTemplate.convertAndSendToUser(
@@ -113,23 +117,13 @@ public class StompChatController {
     }
     @MessageMapping("/chat.send/room.{roomId}")
     public void handleChat(@DestinationVariable String roomId, String message, SimpMessageHeaderAccessor headerAccessor, Principal principal) {
-        Principal userPrincipal = headerAccessor.getUser();
-        // String userName = this.roomService.GetUserName(headerAccessor.getSessionId());
+
         Map<String,String> msg = new HashMap<>();
         msg.put("userId", principal.getName());
         msg.put("message", message);
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            String json = objectMapper.writeValueAsString(msg);
-            this.messageProducer.sendBroadCastMessage(json, roomId);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-   
-        String ss = String.format("/topic/room.%s/message", roomId);
-        // 廣播新用戶訊息給其他人
-        this.simpMessagingTemplate.convertAndSend(ss, msg);
      
+        this.messageProducer.sendBroadCastMessage(msg, roomId);
+
         // 傳送歷史訊息給新用戶
         // this.simpMessagingTemplate.convertAndSendToUser(
         //     message.getSender(), "/queue/history", chatService.getMessageHistory()
