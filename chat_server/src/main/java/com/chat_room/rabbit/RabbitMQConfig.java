@@ -30,9 +30,7 @@ public class RabbitMQConfig {
         rabbitTemplate.setMessageConverter(converter);
         return rabbitTemplate;
     }
-    // public static final String QUEUE_NAME = "testQueue";
-    // public static final String EXCHANGE_NAME = "testExchange";
-    // public static final String ROUTING_KEY = "testKey";
+
     // 定义交换机
     @Bean
     public TopicExchange chatExchange() {
@@ -49,15 +47,21 @@ public class RabbitMQConfig {
     public Queue joinQueue() {
         return new AnonymousQueue();
     }
-
+    @Bean
+    public Queue privateQueue() {
+        return new AnonymousQueue();
+    }
     // 广播队列绑定到交换机
     @Bean
     public Binding broadcastBinding(Queue broadcastQueue, TopicExchange chatExchange) {
         return BindingBuilder.bind(broadcastQueue).to(chatExchange).with("room.*");
     }
-
     @Bean
-    public Binding JoinBinding(Queue joinQueue, TopicExchange chatExchange) {
+    public Binding joinBinding(Queue joinQueue, TopicExchange chatExchange) {
         return BindingBuilder.bind(joinQueue).to(chatExchange).with("room.*.join");
+    }
+    @Bean
+    public Binding privateBinding(Queue privateQueue, TopicExchange chatExchange) {
+        return BindingBuilder.bind(privateQueue).to(chatExchange).with("private");
     }
 }

@@ -1,11 +1,11 @@
 package com.chat_room.rabbit;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -13,95 +13,98 @@ import org.springframework.stereotype.Component;
 
 import com.chat_room.chat_server.RoomService;
 import com.chat_room.chat_server.RoomService.RoomGuy;
-import com.fasterxml.jackson.databind.ObjectMapper;
-// import com.rabbitmq.client.AMQP.Channel;
 import com.rabbitmq.client.Channel;
-// import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 @Component
 public class ChatRabbitListener {
-    //   private final SimpMessagingTemplate messagingTemplate;
+
     private final MessageProducer messageProducer;
     private final RoomService roomService;
+    
+    // 預編譯 join 路由鍵的正則表達式，用來提取房間標識
+    private final Pattern joinRoutingKeyPattern = Pattern.compile("room\\.(.*?)\\.join");
+
     public ChatRabbitListener(MessageProducer messageProducer, RoomService roomService) {
         this.messageProducer = messageProducer;
         this.roomService = roomService;
-        int k = 1;
-        // this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * 處理廣播消息
+     *
+     * @param message    消息內容，格式為 Map<String, String>
+     * @param channel    RabbitMQ 通道（可以用於手動ACK等操作）
+     * @param routingKey 消息的路由鍵
+     */
     @RabbitListener(queues = "#{broadcastQueue.name}")
-    public void handleMessage(Message message, Channel channel) {
-        // 获取消息内容
-        String body = new String(message.getBody());
-        System.out.println("收到消息：" + body);
-        String routingKey = message.getMessageProperties().getReceivedRoutingKey();
-        System.out.println("消息的路由键：" + routingKey);
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, String> map = objectMapper.readValue(body, Map.class);
-            messageProducer.RabbitBroadCast(map, routingKey);
-            System.out.println(map); // {message=pppp, userId=7F4u7IGMb5}
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void handleMessage(Map<String, String> message, Channel channel,
+                              @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
+        messageProducer.RabbitBroadCast(message, routingKey);
     }
+
+    /**
+     * 處理用戶加入房間的消息
+     *
+     * @param message    消息內容，格式為 Map<String, Map<String, String>>
+     * @param channel    RabbitMQ 通道
+     * @param routingKey 路由鍵，例如 room.{roomId}.join
+     */
     @RabbitListener(queues = "#{joinQueue.name}")
-    public void handleJoin(Map<String, Map<String, String>>  message, Channel channel, @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey
-                              ) {
-        // 获取消息内容
-        // String body = new String(message.getBody());
-        // System.out.println("收到消息：" + body);
-        // String routingKey = message.getMessageProperties().getReceivedRoutingKey();
-        // String routingKey = "";
-        System.out.println("消息的路由键：" + routingKey);
-           // 定義正則表達式，其中 (.*?) 為捕獲組，用來取得中間的內容
-        String regex = "room\\.(.*?)\\.join";
+    public void handleJoin(Map<String, Map<String, String>> message, Channel channel,
+                           @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
+        System.out.println("消息的路由鍵：" + routingKey);
         
-        // 編譯正則表達式
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(routingKey);
-      
-        // 如果找到匹配，則取得第一個捕獲組
-        if (matcher.find()) {
-            routingKey = matcher.group(1);
-          
-        } else {
-            System.out.println("沒有匹配到");
+        // 提取房間標識
+        String roomKey = extractRoomKey(routingKey);
+        if (roomKey == null) {
+            System.out.println("沒有匹配到房間標識");
+            return; // 若無法提取房間標識，則不再處理
         }
-        this.messageProducer.RabbitJoin(message, routingKey);
-        // var v = this.simpUserRegistry.getUser(principal.getName());
-        var data = this.roomService.roomsMap.get(routingKey).getMembers().values();
+        
+        // 將 join 消息轉發給消息生產者
+        messageProducer.RabbitJoin(message, roomKey);
+        
+        // 從房間服務中獲取當前房間成員資訊
+        RoomService.Room room = roomService.roomsMap.get(roomKey);
+        if (room == null) {
+            System.out.println("找不到房間：" + roomKey);
+            return;
+        }
+        Collection<RoomGuy> members = room.getMembers().values();
         Map<String, Map<String, String>> transformedMap = new HashMap<>();
-        for (RoomGuy roomGuy : data) {
-            Map<String, String>  value = new HashMap<>();
+        // 將 RoomGuy 資料轉換為 Map 格式，方便後續使用
+        for (RoomGuy roomGuy : members) {
+            Map<String, String> value = new HashMap<>();
             value.put("name", roomGuy.name);
             transformedMap.put(roomGuy.userId, value);
         }
-        var test = (String)message.keySet().toArray()[0];
-        this.messageProducer.RabbitJoinSelf(transformedMap, (String)message.keySet().toArray()[0]);
-        // 
-        // this.simpMessagingTemplate.convertAndSendToUser(
-            //         principal.getName(),"/queue/newUser", json);
-        // // 转换为 JSON
-        // ObjectMapper objectMapper = new ObjectMapper();
-        // try {
-        //     String json = objectMapper.writeValueAsString(transformedMap);
-        //     this.simpMessagingTemplate.convertAndSendToUser(
-        //         principal.getName(),"/queue/newUser", json);
-        // } catch (Exception e) {
-        //     // TODO: handle exception
-        // }
-        // try {
-        //     ObjectMapper objectMapper = new ObjectMapper();
-        //     Map<String, String> map = objectMapper.readValue(body, Map.class);
-        //     messageProducer.RabbitBroadCast(map, routingKey);
-        //     System.out.println(map); // {message=pppp, userId=7F4u7IGMb5}
-        // } catch (Exception e) {
-        //     e.printStackTrace();
-        // }
-        // 获取路由键
-      
-     
-   
+        // 從消息中取得發送者的 ID（假設消息的 key 為發送者的 userId）
+        String senderId = message.keySet().stream().findFirst().orElse("");
+        messageProducer.RabbitJoinSelf(transformedMap, senderId);
+    }
+
+    /**
+     * 處理私聊消息
+     *
+     * @param message 消息內容，格式為 Map<String, String>
+     * @param channel RabbitMQ 通道
+     * @param userId  從消息 header 中取得的用戶 ID
+     */
+    @RabbitListener(queues = "#{privateQueue.name}")
+    public void handlePrivateMessage(Map<String, String> message, Channel channel,
+                                     @Header("userId") String userId) {
+        messageProducer.RabbitPrivateMessage(message, userId);
+    }
+
+    /**
+     * 根據路由鍵提取房間標識。
+     * 例如：對於路由鍵 "room.123.join"，返回 "123"。
+     *
+     * @param routingKey 路由鍵字符串
+     * @return 提取的房間標識，如果無法匹配則返回 null
+     */
+    private String extractRoomKey(String routingKey) {
+        Matcher matcher = joinRoutingKeyPattern.matcher(routingKey);
+        return matcher.find() ? matcher.group(1) : null;
     }
 }
