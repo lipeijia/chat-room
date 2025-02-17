@@ -17,6 +17,8 @@ export const configValue = (_target, _env) => {
       if (_env === STAGE) result = `wss://sample/`;
       if (_env === PROD) result = `wss://sample/`;
       break;
+    case keys.API_BASE_URL:
+      
     default:
   }
   return result;
