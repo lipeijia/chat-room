@@ -2,12 +2,24 @@
 services:
   myapp:
     image: bardlee504/chatserver:v1
+    container_name: myapp
     ports:
       - "8081:8080"
     networks:
       - app-network
     environment:
-      - RABBITMQ_HOST=rabbitmq  
+      - RABBITMQ_HOST=rabbitmq
+      - JAVA_OPTS=-Dnetworkaddress.cache.ttl=0
+      - JAVA_OPTS=-Djava.net.preferIPv4Stack=true
+   
+
+    # command: sh -c "sleep 3 && java -jar app.jar"
+    # command: sh -c "echo '172.18.0.2 rabbitmq' >> /etc/hosts && java -jar app.jar"
+    # extra_hosts:
+    #   - "rabbitmq:172.18.0.2" 
+
+
+
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -20,6 +32,7 @@ services:
       - app-network
     environment:
       - REACT_APP_ENV=DOCKER
+      
  
   rabbitmq:
     image: rabbitmq:3-management

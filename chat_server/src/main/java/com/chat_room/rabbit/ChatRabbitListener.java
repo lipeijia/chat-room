@@ -8,12 +8,19 @@ import java.util.regex.Pattern;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import com.chat_room.chat_server.RoomService;
 import com.chat_room.chat_server.RoomService.RoomGuy;
 import com.rabbitmq.client.Channel;
+
+import ai.onnxruntime.OrtEnvironment;
+import ai.onnxruntime.OrtException;
+import ai.onnxruntime.OrtSession;
+import java.io.File;
+import java.io.IOException;
 
 @Component
 public class ChatRabbitListener {
@@ -53,7 +60,19 @@ public class ChatRabbitListener {
     public void handleJoin(Map<String, Map<String, String>> message, Channel channel,
                            @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
         System.out.println("消息的路由鍵：" + routingKey);
-        
+       try {
+            // 加載 Spring Boot 資源中的 ONNX 模型
+            ClassPathResource resource = new ClassPathResource("models/tower_gan_model.onnx");
+            File modelFile = resource.getFile(); // 取得 File 物件
+
+            try (OrtEnvironment env = OrtEnvironment.getEnvironment();
+                 OrtSession session = env.createSession(modelFile.getAbsolutePath(), new OrtSession.SessionOptions())) {
+                System.out.println("ONNX Model Loaded Successfully: " + modelFile.getAbsolutePath());
+            }
+        } catch (IOException | OrtException e) {
+            e.printStackTrace();
+        }
+    
         // 提取房間標識
         String roomKey = extractRoomKey(routingKey);
         if (roomKey == null) {

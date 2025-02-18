@@ -1,5 +1,5 @@
 # Stage 1: 使用 Node.js 建置 React 應用
-FROM node:16-alpine AS builder
+FROM node:18-alpine AS builder
 WORKDIR /app
 
 # 複製 package.json 和 lock 檔案並安裝相依套件
