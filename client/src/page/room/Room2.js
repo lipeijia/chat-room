@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { json, useLocation, useNavigate } from 'react-router';
 import { useParams } from "react-router-dom";
-import config from '../../config/config';
+import config from '../../config/config'; // 路徑依實際專案結構調整
 import {
   Box,
   Text,
@@ -24,6 +24,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 // const roomId = Math.floor(Math.random() * 2) + 1;
 function Room() {
+  const [getConfig, setConfig] = useState(config);
   const data = useRef([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [text, setText] = useState('');
@@ -60,11 +61,12 @@ function Room() {
   );
   useEffect(() => {
     if (!name || client.current) return;
+    // console.log("Config:", config);
     const userId = generateRandomString();
     // 初始化基於 SockJS 的 Stomp 客戶端
     client.current = new Client({
-      // 替換為你的 WebSocket 端點
-      webSocketFactory: () => new SockJS(`${config.API_BASE_URL}/stomp?userId=${userId}`),
+      // 替換為你的 WebSocket 端點config.API_BASE_URL
+      webSocketFactory: () => new SockJS(`http://localhost:${getConfig.API_BASE_PORT}/stomp?userId=${userId}`),
       reconnectDelay: 5000, // 自動重連間隔（5 秒）
       debug: (str) => {
         console.log(str);

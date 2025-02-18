@@ -4,6 +4,8 @@ import { Button, Center, Input, VStack, SimpleGrid, Box, Text} from '@chakra-ui/
 
 function Login() {
   const navigate = useNavigate();
+
+
   // const [name, setName] = useState('');
   // const handleName = (e) => {
   //   let str = e.target.value;

@@ -1,18 +1,42 @@
-version: '3.8'
+
 services:
   myapp:
     image: bardlee504/chatserver:v1
     ports:
-      - "8080:8080"
-  
-  react-app:
-    image: bardlee504/chatclient:v1
-
-    ports:
-      - "3000:80"
+      - "8081:8080"
     networks:
       - app-network
+    environment:
+      - RABBITMQ_HOST=rabbitmq  
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  react-app:
+    image: bardlee504/chatclient:v1
+    ports:
+      - "3001:80"
+    networks:
+      - app-network
+    environment:
+      - REACT_APP_ENV=DOCKER
+ 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    networks:
+      - app-network
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
 
 networks:
   app-network:
-
