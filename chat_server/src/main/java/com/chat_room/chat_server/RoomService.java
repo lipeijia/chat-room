@@ -19,6 +19,7 @@ public class RoomService {
         public String name;
         public String userId;
         public String roomId;
+        public String image;
         public RoomGuy(String name, String userId, String roomId) {
             this.name = name;
             this.userId = userId;
@@ -77,10 +78,14 @@ public class RoomService {
             return roomId;
         }
 
+        public RoomGuy getMember(String key) {
+            if(!members.containsKey(key))
+                return null;
+            return members.get(key);
+        }
         public Map<String, RoomGuy> getMembers() {
             return members;
         }
-
         public boolean addMember(String sessionId, RoomGuy guy) {
             if (members.containsKey(sessionId)) {
                 return false; // 成員已經在房間內

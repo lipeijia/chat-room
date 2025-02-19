@@ -71,11 +71,13 @@ public class StompChatController {
         } else {
             System.out.println("handleNewUser - Principal: " + principal.getName());
         }
+        
         String sessionId = headerAccessor.getSessionId();
         Map<String, Map<String, String>> transformedMap = new HashMap<>();
         Map<String, String> value = new HashMap<>();
         this.roomService.AddUser(joinDto.name, joinDto.roomId, sessionId, principal.getName());
         value.put("name", joinDto.name);
+        value.put("sessionId", sessionId);
         transformedMap.put(principal.getName(), value);
         this.messageProducer.sendJoinMessage(transformedMap, joinDto.roomId);
     }
