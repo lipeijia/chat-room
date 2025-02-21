@@ -75,8 +75,6 @@ public class ChatRabbitListener {
     public void handleJoin(Map<String, Map<String, String>> message, Channel channel,
                            @Header(AmqpHeaders.RECEIVED_ROUTING_KEY) String routingKey) {
         System.out.println("消息的路由鍵：" + routingKey);
-      
-        
         // 提取房間標識
         String roomKey = extractRoomKey(routingKey);
         if (roomKey == null) {

@@ -82,13 +82,13 @@ function Login() {
         // 選擇聊天室
         <VStack spacing={6} w="80vw">
           <Text fontSize="2xl" fontWeight="bold">選擇一個聊天室</Text>
-          <SimpleGrid columns={2} spacing={5} w="60%">
+          <SimpleGrid columns={2} spacing={2} w="60%">
             {chatRooms.map((room, index) => (
               <Box
                 key={index}
                 h="150px"
                 w="150px"
-                bg="rgba(255, 255, 255, 0.3)"
+                bg="rgba(61, 44, 44, 0.3)"
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
