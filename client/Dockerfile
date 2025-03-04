@@ -10,7 +10,7 @@ RUN npm install
 COPY . .
 
 # 設定 build 參數與環境變數
-ARG REACT_APP_ENV=DOCKER
+ARG REACT_APP_ENV=K8S
 ENV REACT_APP_ENV=$REACT_APP_ENV
 
 # 執行 React 應用建置

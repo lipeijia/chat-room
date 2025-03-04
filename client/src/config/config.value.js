@@ -5,6 +5,7 @@ const DEV = 'DEV';
 const STAGE = 'STAGE';
 const PROD = 'PROD';
 const DOCKER = 'DOCKER';
+const K8S = 'K8S';
 let IP = '127.0.0.1';
 // IP = '192.168.1.101'; // peja
 
@@ -20,6 +21,7 @@ export const configValue = (_target, _env) => {
     case keys.API_BASE_PORT:
       if (_env === LOCAL) result = `8080`;
       else if (_env === DOCKER) result = `8081`;
+      else if (_env === K8S) result = `30001`;
     default:
       break;
   }
