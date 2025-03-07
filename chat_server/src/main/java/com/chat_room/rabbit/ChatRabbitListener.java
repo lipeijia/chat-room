@@ -83,7 +83,7 @@ public class ChatRabbitListener {
         }
         RoomService.Room room = roomService.roomsMap.get(roomKey);
         try{
-            var img = this.imageGenerationService.generateImage();
+            var img = this.imageGenerationService.generateImage(roomKey);
             String nameId = (String)message.keySet().toArray()[0];
             var guy = room.getMember(message.get(nameId).get("sessionId"));
             message.get(nameId).remove("sessionId");
