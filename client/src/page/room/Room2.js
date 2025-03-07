@@ -246,7 +246,28 @@ function Room() {
               >
                 <FancyButton
                   delegate={() => {
-                    // 發送邏輯，可調用 handleTalk(text) 或其他處理
+                    let _destination;
+                    let _body;
+                    if (talkTo === "") {
+                      _destination = `/app/chat.send/room.${roomId}`;
+                      _body = text;
+                    } else {
+                      _destination = "/app/chat.send.private";
+                      _body = JSON.stringify({ text: text, sender: talkTo });
+                      setMessageHistory((prev) => [
+                        ...prev,
+                        name + `對${data.current[talkTo].name}說：` + text,
+                      ]);
+                    }
+
+                    // 假設 client.current.publish 是有效的發送方法
+                    client.current.publish({
+                      body: _body,
+                      destination: _destination,
+                    });
+
+                    // 清空輸入框
+                    setText("");
                   }}
                   text="送出"
                   height="2rem"
