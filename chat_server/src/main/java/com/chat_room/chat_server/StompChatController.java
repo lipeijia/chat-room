@@ -93,10 +93,20 @@ public class StompChatController {
     @MessageMapping("/chat.send.private")
     public void handleChat(@Payload PrivateMessage message, Principal principal) {
     
-        Map<String,String> msg = new HashMap<>();
-        msg.put("userId", principal.getName());
-        msg.put("message", message.getText());
-        this.messageProducer.sendPrivateMessage(msg, message.getSender());
+      
+        if(message.getSender() == "aiUser"){
+            Map<String,String> msg = new HashMap<>();
+            msg.put("userId", message.getSender());
+            msg.put("message", "我是ai");
+            this.messageProducer.sendPrivateMessage(msg, principal.getName());
+        }
+        else{
+            Map<String,String> msg = new HashMap<>();
+            msg.put("userId", principal.getName());
+            msg.put("message", message.getText());
+            this.messageProducer.sendPrivateMessage(msg, message.getSender());
+        }
+           
 
        
      

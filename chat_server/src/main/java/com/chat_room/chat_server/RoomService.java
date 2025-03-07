@@ -11,7 +11,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Service
 public class RoomService {
-   
+    private final ImageGenerationService imageGenerationService;
+    public RoomService(ImageGenerationService imageGenerationService){
+        this.imageGenerationService = imageGenerationService;
+    }
     public HashMap<String, RoomGuy> guysMap = new HashMap<>();
     public HashMap<String, Room> roomsMap = new HashMap<>();
     public class RoomGuy {
@@ -30,8 +33,20 @@ public class RoomService {
         if(guysMap.containsKey(sessionId))
             return false;
         
-        roomsMap.putIfAbsent(roomId, new Room(roomId));
-
+        if(!roomsMap.containsKey(roomId)){
+            roomsMap.put(roomId, new Room(roomId));
+            Room room = roomsMap.get(roomId);
+            RoomGuy newGuy = new RoomGuy("AI", "aiUser", roomId);
+            try{
+                newGuy.image = imageGenerationService.generateImage();
+                boolean checkmember = room.addMember("sjlfksf", newGuy);
+            }
+            catch(Exception ex){
+                int k = 1;
+            }
+         
+        }
+    
         Room room = roomsMap.get(roomId);
         RoomGuy newGuy = new RoomGuy(name, userId, roomId);
         boolean checkmember = room.addMember(sessionId, newGuy);
