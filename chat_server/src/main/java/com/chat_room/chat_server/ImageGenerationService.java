@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.nio.FloatBuffer;
@@ -25,42 +26,30 @@ public class ImageGenerationService {
     
     // 根據你的模型修改這些參數
     private static final int NOISE_DIM = 256;
-    private static final String INPUT_NAME = "onnx::Reshape_0";
+    private static final String[] INPUT_NAME = new String[]{"onnx::Gemm_0", "onnx::Reshape_0"};
     private static final String MODEL_PATH = "models/tower_gan_model.onnx"; // 修改為你的 ONNX 模型路徑
     
     private final OrtEnvironment env;
-    private final OrtSession session;
+
+
+    private final ONNXModelLoader modelLoader;
     private final Random random;
 
-    public ImageGenerationService()  throws OrtException, IOException{
+
+    public ImageGenerationService(ONNXModelLoader modelLoader) {
         this.env = OrtEnvironment.getEnvironment();
-        OrtSession.SessionOptions options = new OrtSession.SessionOptions();
-        // 載入 ONNX 模型
-    
-    // 從 classpath 讀取模型檔案
-        InputStream modelStream = getClass().getResourceAsStream("/models/tower_gan_model.onnx");
-        // if(modelStream == null) {
-        //     throw new FileNotFoundException("Cannot find model file in classpath: /models/tower_gan_model.onnx");
-        // }
-        // 將 InputStream 寫入到臨時檔案
-      
-        File tempFile = File.createTempFile("tower_gan_model", ".onnx");
-        tempFile.deleteOnExit();
-        Files.copy(modelStream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        
-        this.session = env.createSession(tempFile.getAbsolutePath(), options);
-      
-        // File tempFile = File.createTempFile("tower_gan_model", ".onnx");
-        // tempFile.deleteOnExit();
-        // Files.copy(modelStream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        //     this.session = env.createSession(MODEL_PATH, options);
+        this.modelLoader = modelLoader;
         this.random = new Random();
     }
-    
+
     /**
      * 產生隨機 noise，做模型推論，並轉換輸出圖片成 Base64 字串。
      */
-    public String generateImage() throws OrtException, IOException {
+    public String generateImage(String modelKey) throws OrtException, IOException {
+        OrtSession session = modelLoader.getSession(modelKey);
+        if (session == null) {
+            throw new IllegalArgumentException("Model session not found for key: " + modelKey);
+        }
         // 產生隨機 noise（使用正態分佈）
         float[] noiseData = new float[NOISE_DIM];
         NormalDistribution normalDist = new NormalDistribution(0, 1);
@@ -74,7 +63,7 @@ public class ImageGenerationService {
         OnnxTensor inputTensor = OnnxTensor.createTensor(env, fb, inputShape);
         
         // 放入 Map，鍵名稱要與模型相符
-        Map<String, OnnxTensor> inputs = Collections.singletonMap(INPUT_NAME, inputTensor);
+        Map<String, OnnxTensor> inputs = Collections.singletonMap(INPUT_NAME[Integer.parseInt(modelKey)], inputTensor);
         
         // 推論
         OrtSession.Result results = session.run(inputs);
@@ -149,16 +138,5 @@ public class ImageGenerationService {
         baos.close();
         var k = Base64.getEncoder().encodeToString(imageBytes);
         return k;
-    }
-    
-    @PreDestroy
-    public void cleanup() {
-        // 應用結束前釋放 ONNX 資源
-        try {
-            session.close();
-            env.close();
-        } catch (OrtException e) {
-            e.printStackTrace();
-        }
     }
 }

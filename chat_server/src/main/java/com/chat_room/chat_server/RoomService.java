@@ -38,7 +38,7 @@ public class RoomService {
             Room room = roomsMap.get(roomId);
             RoomGuy newGuy = new RoomGuy("AI", "aiUser", roomId);
             try{
-                newGuy.image = imageGenerationService.generateImage();
+                newGuy.image = imageGenerationService.generateImage(roomId);
                 boolean checkmember = room.addMember("sjlfksf", newGuy);
             }
             catch(Exception ex){
