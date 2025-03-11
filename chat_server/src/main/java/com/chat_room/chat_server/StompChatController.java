@@ -15,7 +15,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 @Controller
 public class StompChatController {
     static class  PrivateMessage {
@@ -41,13 +40,13 @@ public class StompChatController {
     }
     private final RoomService roomService;
     private final  SimpMessagingTemplate simpMessagingTemplate;
-    private final SimpUserRegistry simpUserRegistry;
+    private final GenerateMessageService generateMessageService;
     private final MessageProducer messageProducer;
     public  StompChatController(RoomService rService, SimpMessagingTemplate SimpleMessageTe, 
-    SimpUserRegistry simpUserRegistry, MessageProducer messageProducer){
+    GenerateMessageService generateMessageService, MessageProducer messageProducer){
         this.roomService = rService;
         this.simpMessagingTemplate = SimpleMessageTe;
-        this.simpUserRegistry = simpUserRegistry;
+        this.generateMessageService = generateMessageService;
         this.messageProducer = messageProducer;
     }
 
@@ -87,18 +86,17 @@ public class StompChatController {
         Map<String,String> msg = new HashMap<>();
         msg.put("userId", principal.getName());
         msg.put("message", message);
-     
         this.messageProducer.sendBroadCastMessage(msg, roomId);
     }
     @MessageMapping("/chat.send.private")
     public void handleChat(@Payload PrivateMessage message, Principal principal) {
     
       
-        if(message.getSender() == "aiUser"){
+        if(message.getSender().equals("aiUser") ){
             Map<String,String> msg = new HashMap<>();
-            msg.put("userId", message.getSender());
-            msg.put("message", "我是ai");
-            this.messageProducer.sendPrivateMessage(msg, principal.getName());
+            msg.put("userId", principal.getName());
+            msg.put("message", message.getText());
+            generateMessageService.generateText(message.getText(), message.getSender(), principal.getName());
         }
         else{
             Map<String,String> msg = new HashMap<>();

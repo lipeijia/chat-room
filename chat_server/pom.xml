@@ -71,7 +71,17 @@
             <artifactId>commons-math3</artifactId>
             <version>3.6.1</version>
         </dependency>
+            <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20210307</version>
+    </dependency>
 
+    <!-- Spring Boot Starter JSON（可選，若你需要 Jackson 來處理 JSON） -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-json</artifactId>
+    </dependency>
 
     </dependencies>
 
