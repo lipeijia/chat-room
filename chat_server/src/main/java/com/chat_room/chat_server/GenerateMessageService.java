@@ -1,4 +1,5 @@
 package com.chat_room.chat_server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -13,14 +14,15 @@ import org.json.JSONObject;
 @Service
 public class GenerateMessageService {
     private final RestTemplate restTemplate;
-
+    @Value("${chatbot}")
+    private String chatbot;
     public GenerateMessageService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     public String generateText(String prompt, String userId, String sender) {
-        String apiUrl = "http://localhost:8000/generate"; // Python FastAPI URL
 
+        String apiUrl = String.format("http://%s:8000/generate", chatbot);
         // 構造 JSON 請求
         JSONObject request = new JSONObject();
         
