@@ -1,5 +1,6 @@
 package com.chat_room.rabbit;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -25,6 +26,9 @@ public class MessageProducer {
         rabbitTemplate.convertAndSend("chatExchange", String.format("room.%s", roomId), message);
         System.out.println("广播消息发已发送: " + message);
     }
+    //   Map<String,String> msg = new HashMap<>();
+    //   msg.put("userId", principal.getName());
+    //   msg.put("message", message.getText());
     public void sendPrivateMessage( Map<String,String> message, String userId) {
         // 廣播消息发送到公共交换机
         rabbitTemplate.convertAndSend("chatExchange", "private", message, m -> {
