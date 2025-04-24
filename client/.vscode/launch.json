@@ -11,13 +11,25 @@
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}/src"
         },
-    {
-        "type": "pwa-chrome",
-        "request": "launch",
-        "name": "Launch Chrome against localhost",
-        "url": "http://localhost:3000",
-        "webRoot": "${workspaceFolder}/src"
-    },
+        {
+            "type": "pwa-chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/src"
+        },
+        {
+            "type": "pwa-chrome",
+            "request": "launch",
+            "name": "Launch Chrome against localhost Linux",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/src",
+            "runtimeExecutable": "/usr/bin/google-chrome-stable",
+            "runtimeArgs": [
+                "--remote-debugging-port=9222"
+            ],
+            "userDataDir": false
+            },
         {
             "type": "node",
             "request": "launch",

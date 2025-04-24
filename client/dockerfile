@@ -1,8 +1,0 @@
-# 使用輕量的 Nginx 作為基底映像
-FROM nginx:alpine
-
-# 複製 React 打包後的靜態檔案到 Nginx 的預設路徑
-COPY build /usr/share/nginx/html
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

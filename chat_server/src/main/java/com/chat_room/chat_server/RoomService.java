@@ -11,14 +11,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Service
 public class RoomService {
-   
+    private final ImageGenerationService imageGenerationService;
+    public RoomService(ImageGenerationService imageGenerationService){
+        this.imageGenerationService = imageGenerationService;
+    }
     public HashMap<String, RoomGuy> guysMap = new HashMap<>();
     public HashMap<String, Room> roomsMap = new HashMap<>();
-    class RoomGuy {
+    public class RoomGuy {
         @JsonProperty("name")
         public String name;
         public String userId;
         public String roomId;
+        public String image;
         public RoomGuy(String name, String userId, String roomId) {
             this.name = name;
             this.userId = userId;
@@ -29,8 +33,20 @@ public class RoomService {
         if(guysMap.containsKey(sessionId))
             return false;
         
-        roomsMap.putIfAbsent(roomId, new Room(roomId));
-
+        if(!roomsMap.containsKey(roomId)){
+            roomsMap.put(roomId, new Room(roomId));
+            Room room = roomsMap.get(roomId);
+            RoomGuy newGuy = new RoomGuy("AI", "aiUser", roomId);
+            try{
+                newGuy.image = imageGenerationService.generateImage(roomId);
+                boolean checkmember = room.addMember("sjlfksf", newGuy);
+            }
+            catch(Exception ex){
+                int k = 1;
+            }
+         
+        }
+    
         Room room = roomsMap.get(roomId);
         RoomGuy newGuy = new RoomGuy(name, userId, roomId);
         boolean checkmember = room.addMember(sessionId, newGuy);
@@ -64,7 +80,7 @@ public class RoomService {
     }
 
 
-    class Room {
+    public class Room {
         private String roomId;
         private Map<String, RoomGuy> members; // 存放每個房間中的成員
 
@@ -77,10 +93,14 @@ public class RoomService {
             return roomId;
         }
 
+        public RoomGuy getMember(String key) {
+            if(!members.containsKey(key))
+                return null;
+            return members.get(key);
+        }
         public Map<String, RoomGuy> getMembers() {
             return members;
         }
-
         public boolean addMember(String sessionId, RoomGuy guy) {
             if (members.containsKey(sessionId)) {
                 return false; // 成員已經在房間內
