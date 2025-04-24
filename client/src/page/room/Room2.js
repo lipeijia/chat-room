@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { useParams } from 'react-router-dom';
 import config from '../../config/config'; // 路徑依實際專案結構調整
+import useStompClient from '../../hooks/useStompClient';
 import {
   Box,
   Text,
@@ -20,29 +20,25 @@ import {
 } from '@chakra-ui/react';
 import FancyButton from '../../components/buttons';
 import BlobAvatar from './avatar';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
 function Room() {
-
+  const userIdRef = useRef(generateRandomString());
+  const userId = userIdRef.current;
   const [getConfig] = useState(config);
-  const data = useRef([]);
+  const data = useRef({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [text, setText] = useState('');
   const [talkTo, setTalkTo] = useState('');
   const [renderTrigger, setRenderTrigger] = useState(0); // 用於觸發重新渲染
-  const [selfIdx, setSelfIdx] = useState(-1);
   const [messageHistory, setMessageHistory] = useState([]);
-  const client = useRef(null); // 使用 useRef 保存 Stomp 客戶端實例
   const ref = useRef();
   const navigate = useNavigate();
   const location = useLocation();
-
   const isMobile = useBreakpointValue({ base: true, md: false });
   const params = new URLSearchParams(location.search);
   const name = params.get('name');
   const roomId = params.get('roomId');
   const roomName = params.get('roomName');
-
+  const subsRef = useRef([]);
   function generateRandomString() {
     const characters =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -53,106 +49,93 @@ function Room() {
     }
     return result;
   }
-
-  useEffect(() => {
-    if (!name || client.current) return;
-
-    const userId = generateRandomString();
-    // 初始化基於 SockJS 的 Stomp 客戶端
-    client.current = new Client({
-      // 替換為你的 WebSocket 端點，例如 config.API_BASE_URL
-      webSocketFactory: () =>
-        new SockJS(
-          `http://localhost:${getConfig.API_BASE_PORT}/stomp?userId=${userId}`
-        ),
-      reconnectDelay: 5000, // 自動重連間隔（5 秒）
-      debug: (str) => {
-        console.log(str);
-      },
-      onConnect: () => {
-        console.log('已連接到 STOMP');
-
-        // 訂閱主題以接收訊息
-        client.current.subscribe(
-          `/topic/room.${roomId}/message`,
-          (message) => {
-            let d = JSON.parse(message.body);
-            setMessageHistory((prev) => [
-              ...prev,
-              data.current[d.userId].name + '對大家說' + d.message,
-            ]);
-          }
-        );
-
-        client.current.subscribe(
-          `/topic/room.${roomId}/disconnect`,
-          (message) => {
-            let msg = data.current[message.body].name + '已離開房間';
-            setMessageHistory((prev) => [...prev, msg]);
-            delete data.current[message.body];
-            setRenderTrigger((prev) => prev + 1);
-          }
-        );
-
-        client.current.subscribe('/user/queue/newUser', (message) => {
-          client.current.subscribe(`/topic/${roomId}/newUser`, (message) => {
-            const resdata = JSON.parse(message.body);
-            data.current = Object.assign({}, data.current, resdata);
-            setMessageHistory((prev) => [
-              ...prev,
-              '歡迎' + Object.values(resdata)[0].name + '加入房間',
-            ]);
-          });
-          const resdata = JSON.parse(message.body);
-          data.current = resdata;
-          // setSelfIdx(resdata.id);
-          setRenderTrigger((prev) => prev + 1);
-          setMessageHistory((prev) => [
-            ...prev,
-            '歡迎' + data.current[userId].name + '加入房間',
-          ]);
-        });
-
-        client.current.subscribe('/user/queue/private', (message) => {
-          let d = JSON.parse(message.body);
-          setMessageHistory((prev) => [
-            ...prev,
-            data.current[d.userId].name + '對我說' + d.message,
-          ]);
-        });
-
-        // 發送加入聊天室訊息
-        client.current.publish({
-          destination: '/app/chat.join', // 根據你的服務器端點進行調整
-          body: JSON.stringify({ name: name, roomId: roomId }),
-        });
-      },
-      onDisconnect: () => {
-        console.log('已從 STOMP 斷開連接');
-        navigate('/');
-      },
-      onStompError: (frame) => {
-        console.error('代理報告錯誤: ' + frame.headers['message']);
-        console.error('詳細信息: ' + frame.body);
-      },
-    });
-
-    // 添加 beforeunload 事件監聽器
-    const handleBeforeUnload = () => {
-      // 如有需要，可在此處進行離線通知或連線釋放
+    // 訂閱主題以接收訊息
+    const handleMessage =(message) => {
+      let d = JSON.parse(message.body);
+      setMessageHistory((prev) => [
+        ...prev,
+        data.current[d.userId].name + '對大家說' + d.message,
+      ]);
+    }
+    const handlePrivateMessage = (message) => {
+      let d = JSON.parse(message.body);
+      setMessageHistory((prev) => [
+        ...prev,
+        data.current[d.userId].name + '對我說' + d.message,
+      ]);
+    }
+    const handleDisconnect = (message) => {
+      let msg = data.current[message.body].name + '已離開房間';
+      setMessageHistory((prev) => [...prev, msg]);
+      delete data.current[message.body];
+      setRenderTrigger((prev) => prev + 1);
+    }
+    const queueNewUser = (message) => {
+      const resdata = JSON.parse(message.body);
+      data.current = resdata;
+      setRenderTrigger((prev) => prev + 1);
+      setMessageHistory((prev) => [
+        ...prev,
+        '歡迎' + data.current[userId].name + '加入房間',
+      ]);
+    }
+    const topicNewUser = (message) => {
+      const resdata = JSON.parse(message.body);
+      data.current = Object.assign({}, data.current, resdata);
+      setMessageHistory((prev) => [
+        ...prev,
+        '歡迎' + Object.values(resdata)[0].name + '加入房間',
+      ]);
+    }
+    const handlers = {
+      [`/topic/room.${roomId}/message`]: handleMessage,
+      [`/topic/room.${roomId}/disconnect`]: handleDisconnect,
+      '/user/queue/newUser': queueNewUser,
+      [`/topic/${roomId}/newUser`]: topicNewUser,
+      '/user/queue/private': handlePrivateMessage,
     };
+    
+  
+    
+  const { subscribe, publish } = useStompClient({
+    
+    url: `http://localhost:${getConfig.API_BASE_PORT}/stomp?userId=${userId}`,
+    onDisconnect: () => {
+      console.log('已從 STOMP 斷開連接');
+      navigate('/');
+    },
+    onStompError: (frame) => {
+      console.error('STOMP 錯誤: ' + frame.headers['message']);
+      console.error('詳細內容: ' + frame.body);
+    },
+    onConnect: (client) => {
+      console.log('已連接 STOMP');
+      // Object.values(subRef.current).forEach(s => s?.unsubscribe());
+      subsRef.current.forEach(sub => sub.unsubscribe());
+      subsRef.current = [];
+      subsRef.current = Object.entries(handlers).map(([topic, handler]) =>
+        subscribe(topic, handler)
+      );
+      // 發送加入聊天室訊息
+      publish( '/app/chat.join', // 根據你的服務器端點進行調整
+        { name: name, roomId: roomId });
+    }
+   
+  });
+  // useEffect(() => {
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
-    client.current.activate();
+  //   // 添加 beforeunload 事件監聽器
+  //   const handleBeforeUnload = () => {
+  //     // 如有需要，可在此處進行離線通知或連線釋放
+  //   };
 
-    return () => {
-      if (client.current) {
-        client.current.deactivate();
-      }
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [name, getConfig.API_BASE_PORT, navigate]);
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   };
+  // }, [name]);
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -162,21 +145,6 @@ function Room() {
     navigate('/');
   };
 
-  const handleTalk = (val) => {
-    if (client.current && client.current.connected) {
-      const message = {
-        kind: 2, // 假設 2 表示發送消息
-        data: val,
-        senderIdx: selfIdx,
-        receiverIdx: talkTo,
-      };
-      client.current.publish({
-        destination: '/app/chat.send', // 根據你的服務器端點進行調整
-        body: JSON.stringify(message),
-      });
-      setText('');
-    }
-  };
 
   return (
     <Container maxW="container.xl" p={4}>
@@ -261,10 +229,7 @@ function Room() {
                     }
 
                     // 假設 client.current.publish 是有效的發送方法
-                    client.current.publish({
-                      body: _body,
-                      destination: _destination,
-                    });
+                    publish( _destination, _body);
 
                     // 清空輸入框
                     setText("");
