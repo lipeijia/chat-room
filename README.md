@@ -36,3 +36,18 @@ This project integrates a React-based frontend chatroom with a Spring Boot backe
     
 - 進房自動生成頭像（ONNX 模型內建後端）  
     Auto avatar generation upon room entry (ONNX model integrated in backend)
+
+自行部署 GAN 模型（已轉為 ONNX 格式）與 LLaMA3 語言模型（以 Python 執行推論）。
+Deployed a custom GAN model (converted to ONNX) and a LLaMA3 language model (inferred via Python).
+
+分別以 Kind（容器內嵌）與 Minikube（支援 NVIDIA GPU runtime）執行推論服務。
+Ran inference services using Kind (containerized) and Minikube (with NVIDIA GPU runtime).
+
+實測顯示在 GPU 加速下，GAN 模型推論時間降低超過 85%。
+Benchmarking showed over 85% reduction in GAN model inference time with GPU acceleration.
+
+錄製影片展示模型輸入、ONNX 推論流程、RabbitMQ 訊息轉發與前端即時畫面更新。
+A demo video presents the model input, ONNX inference process, RabbitMQ message relay, and real-time front-end updates.
+
+🔗 Demo 影片連結
+🔗 Demo Video Link
