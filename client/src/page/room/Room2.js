@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import config from '../../config/config'; // 路徑依實際專案結構調整
-import useStompClient from '../../hooks/useStompClient';
+import useStompClient from '../../hook/useStompClient';
 import {
   Box,
   Text,
@@ -99,7 +99,7 @@ function Room() {
     
   const { subscribe, publish } = useStompClient({
     
-    url: `http://localhost:${getConfig.API_BASE_PORT}/stomp?userId=${userId}`,
+    url: `${getConfig.SERVER_POINT}:${getConfig.API_BASE_PORT}/stomp?userId=${userId}`,
     onDisconnect: () => {
       console.log('已從 STOMP 斷開連接');
       navigate('/');

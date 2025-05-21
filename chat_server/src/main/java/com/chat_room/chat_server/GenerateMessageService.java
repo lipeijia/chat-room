@@ -33,7 +33,7 @@ public class GenerateMessageService {
         String apiUrl = String.format("http://%s:8000/generate", chatbot);
 
 
-        // 構造 JSON 請求資料
+        // 構造 JSON 請求資料\
         JSONObject request = new JSONObject();
         request.put("userId", userId);
         request.put("prompt", prompt);
