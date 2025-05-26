@@ -19,7 +19,7 @@ export const configValue = (_target, _env) => {
       else if (_env === STAGE) result = `wss://sample/`;
       else if (_env === PROD) result = `wss://sample/`;
       else if (_env === K8S) result = `http://localhost`;
-      else if (_env === GCP) result = `http://35.202.213.199`;
+      else if (_env === GCP) result = `http://34.10.181.143/`;
       break;
     case keys.API_BASE_PORT:
       if (_env === LOCAL) result = `8080`;

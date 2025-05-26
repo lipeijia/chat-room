@@ -19,13 +19,13 @@ import reactor.util.retry.Retry;
 
 @Service
 public class GenerateMessageService {
-    private final RestTemplate restTemplate;
+    // private final RestTemplate restTemplate;
     private final WebClient webClient;
     @Value("${chatbot}")
     private String chatbot;
-    public GenerateMessageService(RestTemplate restTemplate, WebClient webClient) {
+    public GenerateMessageService(WebClient webClient) {
         this.webClient = webClient;
-        this.restTemplate = restTemplate;
+  
     }
 
     public String generateText(String prompt, String userId, String sender) {
