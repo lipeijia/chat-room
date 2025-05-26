@@ -82,18 +82,17 @@ function Login() {
         // 選擇聊天室
         <VStack spacing={6} w="80vw">
           <Text fontSize="2xl" fontWeight="bold">選擇一個聊天室</Text>
-          <SimpleGrid columns={2} spacing={2} w="60%">
+          <SimpleGrid minChildWidth="120px" spacing={4} w={["90%", "42%", "33%"]}>
             {chatRooms.map((room, index) => (
               <Box
                 key={index}
                 h="150px"
-                w="150px"
                 bg="rgba(61, 44, 44, 0.3)"
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 borderRadius="lg"
-                fontSize="xl"
+                fontSize="lg"
                 fontWeight="bold"
                 cursor="pointer"
                 _hover={{ bg: "rgba(255, 255, 255, 0.5)" }}
@@ -102,7 +101,7 @@ function Login() {
                 {room}
               </Box>
             ))}
-          </SimpleGrid>
+        </SimpleGrid>
         </VStack>
       ) : ( 
         // 輸入暱稱並進入聊天室

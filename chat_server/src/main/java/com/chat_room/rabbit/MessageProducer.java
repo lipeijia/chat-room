@@ -35,21 +35,20 @@ public class MessageProducer {
             m.getMessageProperties().setHeader("userId", userId);
             return m;
         });
-        // System.out.println("广播消息发已发送: " + message);
     }
     public void RabbitPrivateMessage(Map<String,String> message, String userId) {
         this.simpMessagingTemplate.convertAndSendToUser(userId,"/queue/private", message);
         
-        System.out.println("单人消息已发送: " + message);
+        System.out.println("單人消息已发送: " + message);
     }
     public void sendJoinMessage(Map<String, Map<String, String>> message, String roomId) {
         // 广播消息发送到公共交换机
         rabbitTemplate.convertAndSend("chatExchange", String.format("room.%s.join", roomId), message);
-        System.out.println("广播消息发已发送: " + message);
+        System.out.println("廣播消息发已发送: " + message);
     }
     public void RabbitBroadCast(Map<String,String> message, String roomId) {
         String ss = String.format("/topic/%s/message", roomId);
-        // 廣播新用戶訊息給其他人
+        // 廣播訊息給其他人
         this.simpMessagingTemplate.convertAndSend(ss, message);
     }
     public void RabbitJoin(Map<String, Map<String, String>> message, String roomId) {

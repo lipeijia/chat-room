@@ -14,12 +14,12 @@ export const configValue = (_target, _env) => {
   let result;
   switch (_target) {
     case keys.SERVER_POINT:
-      if (_env === LOCAL) result = `ws://${IP}:8080/`;
+      if (_env === LOCAL) result = `http://localhost`;
       else if (_env === DEV) result = `wss://sample.com/`;
       else if (_env === STAGE) result = `wss://sample/`;
       else if (_env === PROD) result = `wss://sample/`;
       else if (_env === K8S) result = `http://localhost`;
-      else if (_env === GCP) result = `http://34.10.181.143/`;
+      else if (_env === GCP) result = `http://34.10.181.143`;
       break;
     case keys.API_BASE_PORT:
       if (_env === LOCAL) result = `8080`;

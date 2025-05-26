@@ -20,21 +20,6 @@ import com.chat_room.chat_server.RoomService;
 import com.chat_room.chat_server.RoomService.RoomGuy;
 import com.rabbitmq.client.Channel;
 
-import ai.onnxruntime.OnnxTensor;
-import ai.onnxruntime.OrtEnvironment;
-import ai.onnxruntime.OrtException;
-import ai.onnxruntime.OrtSession;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-import java.util.Base64;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-
 @Component
 public class ChatRabbitListener {
 
@@ -90,7 +75,6 @@ public class ChatRabbitListener {
             message.get(nameId).put("img", img);
             guy.image = img;
 
-            var k = 1;
         }catch(Exception ex){
 
         }

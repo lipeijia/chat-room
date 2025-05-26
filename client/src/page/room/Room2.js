@@ -17,6 +17,7 @@ import {
   Button,
   useBreakpointValue,
   Container,
+  VStack,
 } from '@chakra-ui/react';
 import FancyButton from '../../components/buttons';
 import BlobAvatar from './avatar';
@@ -82,6 +83,8 @@ function Room() {
     const topicNewUser = (message) => {
       const resdata = JSON.parse(message.body);
       data.current = Object.assign({}, data.current, resdata);
+      if(Object.values(resdata)[0].name == data.current[userId].name)
+        return;
       setMessageHistory((prev) => [
         ...prev,
         '歡迎' + Object.values(resdata)[0].name + '加入房間',
@@ -144,16 +147,27 @@ function Room() {
 
     navigate('/');
   };
-
-
   return (
     <Container maxW="container.xl" p={4}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={4} background="purple.200">
+      <Box display="flex" flexDirection="column" justifyContent="space-between" alignItems="center" p={4} background="purple.200">
+        <HStack w="100%">
         <Text fontSize="xl" fontWeight="bold">{roomName}</Text>
-        <HStack spacing={4}>
+        </HStack>
+  
+        <HStack w="100%" spacing={4}>
+          {/* 只有手機版顯示 */}
+          <Button
+            display={{ base: "block", md: "none" }}
+            onClick={() => setIsDrawerOpen(true)}
+            colorScheme="purple"
+          >
+            人員列表
+        </Button>
           <Button colorScheme="blue">刷新</Button>
           <Button colorScheme="red"    onClick={handExit}>退出</Button>
         </HStack>
+      
+  
       </Box>
       <Box display="flex" flexDirection="row" height="100vh">
         {/* 左側：聊天內容區退出域 */}
@@ -244,7 +258,7 @@ function Room() {
         </Box>
 
         {/* 側邊欄按鈕 (僅在手機上顯示) */}
-        {isMobile && (
+        {/* {isMobile && (
           <Button
             position="absolute"
             top="1rem"
@@ -255,7 +269,7 @@ function Room() {
           >
             人員列表
           </Button>
-        )}
+        )} */}
 
         {/* 右側：聊天室名稱與人員列表（Drawer） */}
         <Drawer
